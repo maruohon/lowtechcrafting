@@ -100,6 +100,8 @@ public class ContainerCrafting extends ContainerCustomSlotClick
     @Override
     protected void rightClickSlot(int slotNum, EntityPlayer player)
     {
+        super.leftClickSlot(slotNum, player);
+        /*
         // Not a crafting output slot
         if (slotNum != this.craftingSlot)
         {
@@ -125,6 +127,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick
                 }
             }
         }
+        */
     }
 
     @Override
