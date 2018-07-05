@@ -12,6 +12,6 @@ public class PacketHandler
 
     public static void init()
     {
-        INSTANCE.registerMessage(MessageSyncSlot.Handler.class,                 MessageSyncSlot.class,                 0, Side.CLIENT);
+        INSTANCE.registerMessage(MessageSyncSlot.Handler.class, MessageSyncSlot.class, 0, Side.CLIENT);
     }
 }
