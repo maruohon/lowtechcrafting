@@ -1,10 +1,10 @@
-package com.xcom.oneblocksolutions.inventory.container;
+package com.xcom.oneblocksolutions.inventory.container.base;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.xcom.oneblocksolutions.OneBlockSolutions;
-import com.xcom.oneblocksolutions.inventory.container.base.MergeSlotRange;
-import com.xcom.oneblocksolutions.inventory.container.base.SlotRange;
-import com.xcom.oneblocksolutions.inventory.wrapper.PlayerInvWrapperNoSync;
 import com.xcom.oneblocksolutions.inventory.slot.SlotItemHandlerGeneric;
+import com.xcom.oneblocksolutions.inventory.wrapper.PlayerInvWrapperNoSync;
 import com.xcom.oneblocksolutions.network.PacketHandler;
 import com.xcom.oneblocksolutions.network.message.MessageSyncSlot;
 import com.xcom.oneblocksolutions.tileentity.TileEntityCrafting;
@@ -15,23 +15,18 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ContainerOBSBase extends Container
+public class ContainerBase extends Container
 {
     public static final int GUI_ACTION_SCROLL_MOVE  = 0;
     public static final int GUI_ACTION_SCROLL_SET   = 1;
     protected final TileEntityCrafting te;
-    public final EntityPlayer player;
+    protected final EntityPlayer player;
     protected final boolean isClient;
     protected final InventoryPlayer inventoryPlayer;
     protected final IItemHandlerModifiable playerInv;
-    public final IItemHandler inventory;
     protected MergeSlotRange customInventorySlots;
     protected MergeSlotRange playerMainSlots;
     protected MergeSlotRange playerHotbarSlots;
@@ -41,14 +36,13 @@ public class ContainerOBSBase extends Container
     protected List<MergeSlotRange> mergeSlotRangesExtToPlayer;
     protected List<MergeSlotRange> mergeSlotRangesPlayerToExt;
 
-    public ContainerOBSBase(EntityPlayer player, TileEntityCrafting te)
+    public ContainerBase(EntityPlayer player, TileEntityCrafting te)
     {
         this.player = player;
         this.te = te;
         this.isClient = player.getEntityWorld().isRemote;
         this.inventoryPlayer = player.inventory;
         this.playerInv = new PlayerInvWrapperNoSync(player.inventory);
-        this.inventory = te.getWrappedInventoryForContainer(player);
         this.mergeSlotRangesExtToPlayer = new ArrayList<MergeSlotRange>();
         this.mergeSlotRangesPlayerToExt = new ArrayList<MergeSlotRange>();
 

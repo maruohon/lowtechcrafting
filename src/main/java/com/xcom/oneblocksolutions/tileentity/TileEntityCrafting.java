@@ -10,9 +10,8 @@ import com.xcom.oneblocksolutions.inventory.ItemHandlerCraftResult;
 import com.xcom.oneblocksolutions.inventory.ItemStackHandlerTileEntity;
 import com.xcom.oneblocksolutions.inventory.wrapper.InventoryCraftingWrapper;
 import com.xcom.oneblocksolutions.inventory.wrapper.ItemHandlerWrapperCrafter;
-import com.xcom.oneblocksolutions.inventory.wrapper.ItemHandlerWrapperCrafterContainer;
 import com.xcom.oneblocksolutions.util.Util;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
@@ -25,65 +24,61 @@ import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
-public class TileEntityCrafting extends TileEntity {
-
-    private ItemStackHandlerTileEntity itemHandlerBase;
-    private ItemStackHandlerTileEntity inventoryOutput;
+public class TileEntityCrafting extends TileEntity
+{
+    private ItemStackHandlerTileEntity itemHandlerCraftingGrid;
+    private ItemStackHandlerTileEntity itemHandlerOutput;
     private InventoryCraftingWrapper inventoryCrafting;
-    private ItemHandlerCraftResult inventoryCraftResult;
-    private ItemHandlerWrapperCrafter crafter;
+    private ItemHandlerCraftResult itemHandlerCraftResult;
+    private ItemHandlerWrapperCrafter itemHandlerWrapperCrafter;
     private IItemHandler itemHandlerExternal;
     private String customInventoryName;
     private FakePlayer fakePlayer;
     private final String tileEntityName;
 
-    public TileEntityCrafting() {
+    public TileEntityCrafting()
+    {
         this.tileEntityName = BlockCraftingTable.REGISTRY_NAME;
-        this.itemHandlerBase = new ItemStackHandlerTileEntity(0, 9,  1, false, "Items", this);
-        this.inventoryOutput = new ItemStackHandlerTileEntity(1, 1, 64, false, "ItemsOut", this);
-        this.inventoryCraftResult = new ItemHandlerCraftResult();
-        this.inventoryCrafting = new InventoryCraftingWrapper(3, 3, this.itemHandlerBase, this.inventoryCraftResult);
+        this.itemHandlerCraftingGrid    = new ItemStackHandlerTileEntity(0, 9, 64, false, "Items", this);
+        this.itemHandlerOutput          = new ItemStackHandlerTileEntity(1, 1, 64, false, "ItemsOut", this);
+        this.itemHandlerCraftResult     = new ItemHandlerCraftResult();
+        this.inventoryCrafting          = new InventoryCraftingWrapper(3, 3, this.itemHandlerCraftingGrid, this.itemHandlerCraftResult);
 
-        this.crafter = new ItemHandlerWrapperCrafter(
-                this.itemHandlerBase,
-                this.inventoryOutput,
-                this.inventoryCraftResult,
+        this.itemHandlerWrapperCrafter = new ItemHandlerWrapperCrafter(
+                this.itemHandlerCraftingGrid,
+                this.itemHandlerOutput,
+                this.itemHandlerCraftResult,
                 this.inventoryCrafting);
 
-        this.itemHandlerExternal = this.crafter;
+        this.itemHandlerExternal = new ItemHandlerWrapperCrafterExternal(this.itemHandlerWrapperCrafter);
     }
 
-    /**
-     * Returns an inventory wrapper for use in Containers/Slots.<br>
-     */
-    public IItemHandler getWrappedInventoryForContainer(EntityPlayer player) {
-        return new ItemHandlerWrapperCrafterContainer(this.itemHandlerBase,
-                this.itemHandlerExternal, this.inventoryOutput, true);
-    }
-
-    public InventoryCraftingWrapper getCraftingGridWrapperInventory() {
+    public InventoryCraftingWrapper getCraftingGridWrapperInventory()
+    {
         return this.inventoryCrafting;
     }
 
-    public ItemStackHandlerTileEntity getBaseItemHandler() {
-        return itemHandlerBase;
+    public ItemHandlerCraftResult getCraftResultInventory()
+    {
+        return this.itemHandlerCraftResult;
     }
 
     @Override
-    public void onLoad() {
+    public void onLoad()
+    {
         if (this.getWorld().isRemote == false)
         {
             FakePlayer player = this.getPlayer();
             this.inventoryCrafting.setPlayer(player);
-            this.inventoryCraftResult.init(this.inventoryCrafting, this.getWorld(), player, this.getPos());
+            this.itemHandlerCraftResult.init(this.inventoryCrafting, this.getWorld(), player, this.getPos());
             //this.crafter.onLoad();
         }
     }
 
     public void dropInventories()
     {
-        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.getBaseItemHandler());
-        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.inventoryOutput);
+        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerCraftingGrid);
+        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerOutput);
     }
 
     /**
@@ -107,8 +102,8 @@ public class TileEntityCrafting extends TileEntity {
 
     public void readFromNBTCustom(NBTTagCompound nbt)
     {
-        this.itemHandlerBase.deserializeNBT(nbt);
-        this.inventoryOutput.deserializeNBT(nbt);
+        this.itemHandlerCraftingGrid.deserializeNBT(nbt);
+        this.itemHandlerOutput.deserializeNBT(nbt);
 
         if (nbt.hasKey("CustomName", Constants.NBT.TAG_STRING))
         {
@@ -124,11 +119,12 @@ public class TileEntityCrafting extends TileEntity {
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt)
+    {
         nbt = super.writeToNBT(nbt);
 
-        nbt.merge(this.itemHandlerBase.serializeNBT());
-        nbt.merge(this.inventoryOutput.serializeNBT());
+        nbt.merge(this.itemHandlerCraftingGrid.serializeNBT());
+        nbt.merge(this.itemHandlerOutput.serializeNBT());
 
         if (this.hasCustomName())
         {
@@ -139,7 +135,8 @@ public class TileEntityCrafting extends TileEntity {
     }
 
     @Override
-    public NBTTagCompound getUpdateTag() {
+    public NBTTagCompound getUpdateTag()
+    {
         // The tag from this method is used for the initial chunk packet,
         // and it needs to have the TE position!
         NBTTagCompound nbt = new NBTTagCompound();
@@ -153,8 +150,10 @@ public class TileEntityCrafting extends TileEntity {
 
     @Override
     @Nullable
-    public SPacketUpdateTileEntity getUpdatePacket() {
-        if (this.getWorld() != null) {
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        if (this.getWorld() != null)
+        {
             return new SPacketUpdateTileEntity(this.getPos(), 0, this.getUpdateTag());
         }
 
@@ -162,8 +161,10 @@ public class TileEntityCrafting extends TileEntity {
     }
 
     @Override
-    public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+    public boolean hasCapability(Capability<?> capability, EnumFacing facing)
+    {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+        {
             return this.itemHandlerExternal != null;
         }
 
@@ -171,15 +172,18 @@ public class TileEntityCrafting extends TileEntity {
     }
 
     @Override
-    public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+    public <T> T getCapability(Capability<T> capability, EnumFacing facing)
+    {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+        {
             return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(this.itemHandlerExternal);
         }
 
         return super.getCapability(capability, facing);
     }
 
-    public void inventoryChanged(int inventoryId, int slot) {
+    public void inventoryChanged(int inventoryId, int slot)
+    {
     }
 
     public void setInventoryName(String name)
@@ -195,5 +199,80 @@ public class TileEntityCrafting extends TileEntity {
     public String getName()
     {
         return this.hasCustomName() ? this.customInventoryName : Reference.MODID;
+    }
+
+    public static class ItemHandlerWrapperCrafterExternal implements IItemHandler
+    {
+        private final IItemHandler inventoryCrafter;
+
+        public ItemHandlerWrapperCrafterExternal(IItemHandler inventoryCrafter)
+        {
+            this.inventoryCrafter = inventoryCrafter;
+        }
+
+        @Override
+        public int getSlots()
+        {
+            return this.inventoryCrafter.getSlots();
+        }
+
+        @Override
+        public int getSlotLimit(int slot)
+        {
+            return this.inventoryCrafter.getSlotLimit(slot);
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot)
+        {
+            return this.inventoryCrafter.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)
+        {
+            if (slot == 0)
+            {
+                return stack;
+            }
+
+            // Already items in the slot, don't insert anything
+            if (this.inventoryCrafter.getStackInSlot(slot).getCount() > 0)
+            {
+                return stack;
+            }
+
+            // Trying to insert more than one item: only insert one of them
+            if (stack.getCount() > 1)
+            {
+                ItemStack stackInsert = stack.copy();
+                stackInsert.setCount(1);
+                stackInsert = this.inventoryCrafter.insertItem(slot, stackInsert, simulate);
+
+                // Successfully inserted, return the original stack shrunk by one
+                if (stackInsert.isEmpty())
+                {
+                    stack = stack.copy();
+                    stack.shrink(1);
+                    return stack;
+                }
+                // Could not insert, return the original stack
+                else
+                {
+                    return stack;
+                }
+            }
+            // Only inserting one item, handle it directly
+            else
+            {
+                return this.inventoryCrafter.insertItem(slot, stack, simulate);
+            }
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate)
+        {
+            return this.inventoryCrafter.extractItem(slot, amount, simulate);
+        }
     }
 }

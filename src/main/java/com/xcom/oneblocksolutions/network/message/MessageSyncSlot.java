@@ -1,7 +1,7 @@
 package com.xcom.oneblocksolutions.network.message;
 
 import com.xcom.oneblocksolutions.OneBlockSolutions;
-import com.xcom.oneblocksolutions.inventory.container.ContainerOBSBase;
+import com.xcom.oneblocksolutions.inventory.container.base.ContainerBase;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -87,10 +87,10 @@ public class MessageSyncSlot implements IMessage
 
         protected void processMessage(final MessageSyncSlot message, EntityPlayer player)
         {
-            if (player.openContainer instanceof ContainerOBSBase && message.windowId == player.openContainer.windowId)
+            if (player.openContainer instanceof ContainerBase && message.windowId == player.openContainer.windowId)
             {
                 //System.out.printf("MessageSyncSlot - slot: %3d stack: %s\n", message.slotNum, message.stack);
-                ((ContainerOBSBase) player.openContainer).syncStackInSlot(message.slotNum, message.stack);
+                ((ContainerBase) player.openContainer).syncStackInSlot(message.slotNum, message.stack);
             }
         }
     }

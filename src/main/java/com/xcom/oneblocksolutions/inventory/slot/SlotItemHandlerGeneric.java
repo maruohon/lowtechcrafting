@@ -50,6 +50,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     @Override
     public void putStack(ItemStack stack)
     {
+        //System.out.printf("Slot.putStack: slot = %d, %s, inv = %s\n", this.getSlotIndexForSync(), this, this.getItemHandler());
         if (this.getItemHandler() instanceof IItemHandlerModifiable)
         {
             //System.out.printf("SlotItemHandlerGeneric#putStack() - setStackInSlot() - slot: %3d stack: %s\n", this.getSlotIndex(), stack);
@@ -66,6 +67,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
 
     public void syncStack(ItemStack stack)
     {
+        //System.out.printf("Slot.syncStack: slot = %d, %s, inv = %s\n", this.getSlotIndexForSync(), this, this.getItemHandler());
         if (this.getItemHandler() instanceof IItemHandlerSyncable)
         {
             ((IItemHandlerSyncable) this.getItemHandler()).syncStackInSlot(this.getSlotIndexForSync(), stack);
