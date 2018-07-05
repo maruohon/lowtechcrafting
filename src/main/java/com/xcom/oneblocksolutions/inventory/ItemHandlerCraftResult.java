@@ -69,7 +69,7 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 
         IRecipe recipe = this.getRecipe();
 
-        if (recipe != null && recipe.isHidden() == false)
+        if (recipe != null && recipe.isDynamic() == false)
         {
             // This will crash when the RecipeBook tries to send a packet to the FakePlayer
             //this.player.unlockRecipes(Lists.newArrayList(recipe));

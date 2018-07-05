@@ -18,59 +18,72 @@ import net.minecraftforge.items.IItemHandlerModifiable;
  *
  * @author masa
  */
-public class ItemHandlerWrapperContainer implements IItemHandlerModifiable, IItemHandlerSelective, IItemHandlerSize
+public class ItemHandlerWrapperCrafterContainer implements IItemHandlerModifiable, IItemHandlerSelective, IItemHandlerSize//, IItemHandlerSyncable
 {
     protected final IItemHandlerModifiable baseHandlerModifiable;
     protected final IItemHandler wrapperHandler;
+    protected final IItemHandlerModifiable outputSlot;
     private final boolean useWrapperForExtract;
 
-    public ItemHandlerWrapperContainer(IItemHandlerModifiable baseHandler, IItemHandler wrapperHandler)
+    public ItemHandlerWrapperCrafterContainer(IItemHandlerModifiable baseHandler, IItemHandler wrapperHandler, IItemHandlerModifiable outputSlot)
     {
-        this(baseHandler, wrapperHandler, false);
+        this(baseHandler, wrapperHandler, outputSlot, false);
     }
 
-    public ItemHandlerWrapperContainer(IItemHandlerModifiable baseHandler, IItemHandler wrapperHandler, boolean useWrapperForExtract)
+    public ItemHandlerWrapperCrafterContainer(IItemHandlerModifiable baseHandler, IItemHandler wrapperHandler,
+            IItemHandlerModifiable outputSlot, boolean useWrapperForExtract)
     {
         this.baseHandlerModifiable = baseHandler;
         this.wrapperHandler = wrapperHandler;
+        this.outputSlot = outputSlot;
         this.useWrapperForExtract = useWrapperForExtract;
     }
 
     @Override
     public int getSlots()
     {
-        // Note: Ender Utilities uses the wrapper handler for this.
-        // But since Autoverse has lots of wrappers where only 1 slot is exposed externally,
-        // but we still want to have access to the base inventory via the GUI,
-        // we use the base handler here.
-        return this.baseHandlerModifiable.getSlots();
+        return this.wrapperHandler.getSlots();
     }
 
     @Override
     public int getSlotLimit(int slot)
     {
-        // Note: Ender Utilities uses the wrapper handler for this.
-        // But since Autoverse has lots of wrappers where only 1 slot is exposed externally,
-        // but we still want to have access to the base inventory via the GUI,
-        // we use the base handler here.
-        return this.baseHandlerModifiable.getSlotLimit(slot);
+        return this.wrapperHandler.getSlotLimit(slot);
     }
 
     @Override
     public ItemStack getStackInSlot(int slot)
     {
-        // Note: Ender Utilities uses the wrapper handler for this.
-        // But since Autoverse has lots of wrappers where only 1 slot is exposed externally,
-        // but we still want to have access to the base inventory via the GUI,
-        // we use the base handler here.
-        return this.baseHandlerModifiable.getStackInSlot(slot);
+        return this.wrapperHandler.getStackInSlot(slot);
     }
 
     @Override
     public void setStackInSlot(int slot, ItemStack stack)
     {
-        this.baseHandlerModifiable.setStackInSlot(slot, stack);
+        if (slot == 0)
+        {
+            this.outputSlot.setStackInSlot(slot, stack);
+        }
+        else
+        {
+            this.baseHandlerModifiable.setStackInSlot(slot - 1, stack);
+        }
     }
+
+    /*
+    @Override
+    public void syncStackInSlot(int slot, ItemStack stack)
+    {
+        if (slot == 0)
+        {
+            this.outputSlot.setStackInSlot(slot, stack);
+        }
+        else
+        {
+            this.baseHandlerModifiable.setStackInSlot(slot - 1, stack);
+        }
+    }
+    */
 
     @Override
     public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)

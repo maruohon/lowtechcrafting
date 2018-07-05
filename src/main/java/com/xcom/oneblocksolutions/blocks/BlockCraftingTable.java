@@ -52,6 +52,20 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
+    public void breakBlock(World world, BlockPos pos, IBlockState state)
+    {
+        TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);
+
+        if (te != null)
+        {
+            te.dropInventories();
+            world.updateComparatorOutputLevel(pos, this);
+        }
+
+        world.removeTileEntity(pos);
+    }
+
+    @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
     {
         TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);

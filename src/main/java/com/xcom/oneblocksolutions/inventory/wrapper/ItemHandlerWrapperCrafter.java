@@ -16,9 +16,9 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
 
     public ItemHandlerWrapperCrafter(
             IItemHandlerModifiable inventoryCraftingGridBase,
+            IItemHandler inventoryOutput,
             IItemHandler inventoryCraftingOutput,
-            InventoryCraftingWrapper inventoryCraftingWrapper,
-            IItemHandler inventoryOutput)
+            InventoryCraftingWrapper inventoryCraftingWrapper)
     {
         this.inventoryCraftingGridBase = inventoryCraftingGridBase;
         this.inventoryCraftingOutput = inventoryCraftingOutput;
@@ -57,7 +57,7 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
         // The rest of the slots are for the crafting grid.
         if (slot == 0)
         {
-            ItemStack stack = this.inventoryCraftingOutput.getStackInSlot(0);
+            ItemStack stack = this.inventoryOutput.getStackInSlot(0);
 
             // If there are items in the output inventory (after a partial craft operation), show those
             if (stack.isEmpty() == false)
@@ -77,7 +77,42 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
     @Override
     public ItemStack extractItem(int slot, int amount, boolean simulate)
     {
-        return ItemStack.EMPTY;
+        // Crafting output slot
+        if (slot == 0)
+        {
+            ItemStack stack = this.inventoryOutput.getStackInSlot(0);
+
+            if (simulate == false)
+            {
+                // If the output buffer inventory slot is empty, then craft and move one set of crafted items into it
+                if (stack.isEmpty())
+                {
+                    // Craft one set of items
+                    stack = this.inventoryCraftingOutput.extractItem(0, stack.getCount(), false);
+                    this.inventoryOutput.insertItem(0, stack, false);
+                }
+
+                // ... and then extract from that output buffer inventory slot
+                return this.inventoryOutput.extractItem(0, amount, false);
+            }
+            // Simulating...
+            else
+            {
+                // Items in the output buffer, use those
+                if (stack.isEmpty() == false)
+                {
+                    return this.inventoryOutput.extractItem(0, amount, true);
+                }
+
+                // No output buffer items, use the crafting recipe output instead
+                return this.inventoryCraftingOutput.extractItem(0, amount, true);
+            }
+        }
+        // Crafting grid slots
+        else
+        {
+            return this.inventoryCraftingGridBase.extractItem(slot - 1, amount, simulate);
+        }
     }
 
     @Override
@@ -89,7 +124,15 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
             return stack;
         }
 
-        return this.inventoryCraftingGridBase.insertItem(slot - 1, stack, simulate);
+        stack = this.inventoryCraftingGridBase.insertItem(slot - 1, stack, simulate);
+
+        // If actually adding items, update the recipe output
+        if (simulate == false)
+        {
+            this.inventoryCraftingWrapper.markDirty();
+        }
+
+        return stack;
     }
 
     @Override

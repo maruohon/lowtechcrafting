@@ -1,10 +1,7 @@
 package com.xcom.oneblocksolutions.inventory;
 
-import com.xcom.oneblocksolutions.util.NBTUtils;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.items.IItemHandlerModifiable;
-
 import javax.annotation.Nonnull;
+import com.xcom.oneblocksolutions.util.NBTUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;

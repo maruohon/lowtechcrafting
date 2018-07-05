@@ -1,5 +1,7 @@
 package com.xcom.oneblocksolutions.inventory.wrapper;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import com.xcom.oneblocksolutions.inventory.ItemHandlerCraftResult;
 import net.minecraft.client.util.RecipeItemHelper;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,9 +12,6 @@ import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandlerModifiable;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class InventoryCraftingWrapper extends InventoryCrafting
 {
@@ -176,7 +175,6 @@ public class InventoryCraftingWrapper extends InventoryCrafting
             IRecipe recipe = CraftingManager.findMatchingRecipe(this, world);
             ItemStack stack = ItemStack.EMPTY;
 
-            // isHidden() is rather something like "isNBT()" or "modifiesData()"
             if (recipe != null)
             //&& (recipe.isHidden() || world.getGameRules().getBoolean("doLimitedCrafting") == false || this.player.getRecipeBook().containsRecipe(recipe)))
             {

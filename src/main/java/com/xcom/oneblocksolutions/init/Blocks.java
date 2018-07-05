@@ -14,12 +14,12 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 @Mod.EventBusSubscriber(modid = Reference.MODID)
 public class Blocks {
 
-    public static Block CRAFTING_TABLE = new BlockCraftingTable();
+    public static final Block CRAFTING_TABLE = new BlockCraftingTable();
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().register(CRAFTING_TABLE.setRegistryName(Reference.MODID, BlockCraftingTable.REGISTRY_NAME));
-        GameRegistry.registerTileEntity(TileEntityCrafting.class, CRAFTING_TABLE.getRegistryName());
+        GameRegistry.registerTileEntity(TileEntityCrafting.class, CRAFTING_TABLE.getRegistryName().toString());
     }
 
     @SubscribeEvent
