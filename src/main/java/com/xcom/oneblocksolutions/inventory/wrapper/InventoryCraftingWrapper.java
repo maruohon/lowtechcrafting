@@ -102,20 +102,31 @@ public class InventoryCraftingWrapper extends InventoryCrafting
     @Override
     public ItemStack removeStackFromSlot(int slot)
     {
-        return this.craftMatrix.extractItem(slot, Integer.MAX_VALUE, false);
+        return this.craftMatrix.extractItem(slot, this.craftMatrix.getStackInSlot(slot).getCount(), false);
     }
 
     @Override
     public ItemStack decrStackSize(int slot, int amount)
     {
-        ItemStack stack = this.craftMatrix.extractItem(slot, amount, false);
+        // This goes against the Forge IItemHandler contract,
+        // but the vanilla ServerRecipeBoookHelper goes into an infinite loop
+        // if the original stack instance doesn't shrink... >_>
 
-        if (stack.isEmpty() == false)
+        ItemStack stackOrig = this.craftMatrix.getStackInSlot(slot);
+        ItemStack stackReturn = stackOrig.copy();
+
+        amount = Math.min(amount, stackOrig.getCount());
+        stackReturn.setCount(amount);
+        stackOrig.shrink(amount);
+
+        this.craftMatrix.setStackInSlot(slot, stackOrig); // To mark the underlying inventory dirty
+
+        if (stackReturn.isEmpty() == false)
         {
             this.markDirty();
         }
 
-        return stack;
+        return stackReturn;
     }
 
     @Override

@@ -10,12 +10,15 @@ import com.xcom.oneblocksolutions.tileentity.TileEntityCrafting;
 import com.xcom.oneblocksolutions.util.InventoryUtils;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ClickType;
+import net.minecraft.inventory.InventoryCraftResult;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.crafting.IRecipeContainer;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 
-public class ContainerCrafting extends ContainerCustomSlotClick
+public class ContainerCrafting extends ContainerCustomSlotClick implements IRecipeContainer
 {
     protected final TileEntityCrafting te;
     private final InventoryCraftingWrapper invCraftingGrid;
@@ -142,5 +145,18 @@ public class ContainerCrafting extends ContainerCustomSlotClick
         }
 
         return ItemStack.EMPTY;
+    }
+
+    @Override
+    public InventoryCraftResult getCraftResult()
+    {
+        // dummy
+        return new InventoryCraftResult();
+    }
+
+    @Override
+    public InventoryCrafting getCraftMatrix()
+    {
+        return this.invCraftingGrid;
     }
 }
