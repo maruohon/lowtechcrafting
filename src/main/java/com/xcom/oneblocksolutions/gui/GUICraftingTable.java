@@ -27,6 +27,14 @@ public class GUICraftingTable extends GuiContainer{
     }
 
     @Override
+    public void drawScreen(int mouseX, int mouseY, float gameTicks)
+    {
+        this.drawDefaultBackground();
+
+        super.drawScreen(mouseX, mouseY, gameTicks);
+    }
+
+    @Override
     protected void drawGuiContainerBackgroundLayer(float gameTicks, int mouseX, int mouseY)
     {
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);

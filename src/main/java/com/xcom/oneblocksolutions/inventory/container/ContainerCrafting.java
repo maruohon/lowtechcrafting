@@ -26,7 +26,7 @@ public class ContainerCrafting extends ContainerOBSBase
     @Override
     protected void addCustomInventorySlots()
     {
-        this.customInventorySlots = new MergeSlotRange(this.inventorySlots.size(), 9);
+        this.customInventorySlots = new MergeSlotRange(this.inventorySlots.size(), 10);
 
         int posX = 30;
         int posY = 17;
