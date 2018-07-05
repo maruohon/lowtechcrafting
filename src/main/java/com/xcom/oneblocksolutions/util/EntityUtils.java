@@ -1,45 +1,13 @@
 package com.xcom.oneblocksolutions.util;
 
-import javax.annotation.Nonnull;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
 
-public class Util {
-    public static boolean areItemStacksEqual(@Nonnull ItemStack stack1, @Nonnull ItemStack stack2)
-    {
-        if (stack1.isEmpty() || stack2.isEmpty())
-        {
-            return stack1.isEmpty() == stack2.isEmpty();
-        }
-
-        return stack1.isItemEqual(stack2) && ItemStack.areItemStackTagsEqual(stack1, stack2);
-    }
-
-    /**
-     * Drops all the ItemStacks from the given inventory into the world as EntityItems
-     * @param world
-     * @param pos
-     * @param inv
-     */
-    public static void dropInventoryContentsInWorld(World world, BlockPos pos, IItemHandler inv)
-    {
-        final int invSize = inv.getSlots();
-
-        for (int slot = 0; slot < invSize; ++slot)
-        {
-            ItemStack stack = inv.getStackInSlot(slot);
-
-            if (stack.isEmpty() == false)
-            {
-                dropItemStacksInWorld(world, pos, stack, -1, true);
-            }
-        }
-    }
-
+public class EntityUtils
+{
     public static void dropItemStacksInWorld(World worldIn, BlockPos pos, ItemStack stack, int amountOverride, boolean dropFullStacks)
     {
         dropItemStacksInWorld(worldIn, pos, stack, amountOverride, dropFullStacks, true);

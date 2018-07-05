@@ -5,9 +5,8 @@ import com.xcom.oneblocksolutions.inventory.ItemHandlerCraftResult;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.util.NonNullList;
+import net.minecraftforge.items.IItemHandler;
 
 public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
 {
@@ -19,9 +18,10 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
     public SlotItemHandlerCraftResult(
             InventoryCrafting craftMatrix,
             ItemHandlerCraftResult craftResult,
+            IItemHandler inventoryWrapper,
             int index, int xPosition, int yPosition, EntityPlayer player)
     {
-        super(craftResult, index, xPosition, yPosition);
+        super(inventoryWrapper, index, xPosition, yPosition);
 
         this.player = player;
         this.craftMatrix = craftMatrix;
@@ -70,46 +70,5 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
             this.player.unlockRecipes(Lists.newArrayList(recipe));
             this.craftResult.setRecipe(null);
         }
-    }
-
-    public ItemStack onTake(EntityPlayer player, ItemStack stack)
-    {
-        this.onCrafting(stack);
-
-        net.minecraftforge.common.ForgeHooks.setCraftingPlayer(player);
-        NonNullList<ItemStack> remainingItems = CraftingManager.getRemainingItems(this.craftMatrix, player.getEntityWorld());
-        net.minecraftforge.common.ForgeHooks.setCraftingPlayer(null);
-
-        for (int i = 0; i < remainingItems.size(); i++)
-        {
-            ItemStack stackInSlot = this.craftMatrix.getStackInSlot(i);
-            ItemStack remainingItemsInSlot = remainingItems.get(i);
-
-            if (stackInSlot.isEmpty() == false)
-            {
-                this.craftMatrix.decrStackSize(i, 1);
-                stackInSlot = this.craftMatrix.getStackInSlot(i);
-            }
-
-            if (remainingItemsInSlot.isEmpty() == false)
-            {
-                if (stackInSlot.isEmpty())
-                {
-                    this.craftMatrix.setInventorySlotContents(i, remainingItemsInSlot);
-                }
-                else if (ItemStack.areItemsEqual(stackInSlot, remainingItemsInSlot) &&
-                         ItemStack.areItemStackTagsEqual(stackInSlot, remainingItemsInSlot))
-                {
-                    remainingItemsInSlot.grow(stackInSlot.getCount());
-                    this.craftMatrix.setInventorySlotContents(i, remainingItemsInSlot);
-                }
-                else if (this.player.inventory.addItemStackToInventory(remainingItemsInSlot) == false)
-                {
-                    this.player.dropItem(remainingItemsInSlot, false);
-                }
-            }
-        }
-
-        return stack;
     }
 }

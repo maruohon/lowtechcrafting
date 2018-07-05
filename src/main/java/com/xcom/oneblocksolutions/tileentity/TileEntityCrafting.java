@@ -10,7 +10,7 @@ import com.xcom.oneblocksolutions.inventory.ItemHandlerCraftResult;
 import com.xcom.oneblocksolutions.inventory.ItemStackHandlerTileEntity;
 import com.xcom.oneblocksolutions.inventory.wrapper.InventoryCraftingWrapper;
 import com.xcom.oneblocksolutions.inventory.wrapper.ItemHandlerWrapperCrafter;
-import com.xcom.oneblocksolutions.util.Util;
+import com.xcom.oneblocksolutions.util.InventoryUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -63,6 +63,11 @@ public class TileEntityCrafting extends TileEntity
         return this.itemHandlerCraftResult;
     }
 
+    public IItemHandler getCraftingWrapperInventory()
+    {
+        return this.itemHandlerWrapperCrafter;
+    }
+
     @Override
     public void onLoad()
     {
@@ -77,8 +82,8 @@ public class TileEntityCrafting extends TileEntity
 
     public void dropInventories()
     {
-        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerCraftingGrid);
-        Util.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerOutput);
+        InventoryUtils.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerCraftingGrid);
+        InventoryUtils.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerOutput);
     }
 
     /**

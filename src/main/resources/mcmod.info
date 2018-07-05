@@ -1,14 +1,14 @@
 [
 {
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
-  "url": "",
+  "modid": "obs",
+  "name": "One Block Solutions",
+  "description": "Demo of a better Crafting Table",
+  "version": "${mod_version}",
+  "mcversion": "${minecraft_version}",
+  "url": "https://github.com/maruohon/oneblocksolutions.git",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
+  "authorList": ["masa", "Xcom6000"],
+  "credits": "",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

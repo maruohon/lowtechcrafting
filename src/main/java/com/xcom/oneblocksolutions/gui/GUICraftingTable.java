@@ -32,6 +32,8 @@ public class GUICraftingTable extends GuiContainer{
         this.drawDefaultBackground();
 
         super.drawScreen(mouseX, mouseY, gameTicks);
+
+        this.renderHoveredToolTip(mouseX, mouseY);
     }
 
     @Override

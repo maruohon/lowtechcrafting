@@ -1,7 +1,9 @@
 package com.xcom.oneblocksolutions.inventory;
 
+import javax.annotation.Nullable;
 import com.xcom.oneblocksolutions.inventory.wrapper.InventoryCraftingWrapper;
-import com.xcom.oneblocksolutions.util.Util;
+import com.xcom.oneblocksolutions.util.EntityUtils;
+import com.xcom.oneblocksolutions.util.InventoryUtils;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
@@ -9,8 +11,6 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-
-import javax.annotation.Nullable;
 
 public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 {
@@ -105,14 +105,14 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
                 {
                     this.craftMatrix.setInventorySlotContents(slot, remainingItemsInSlot);
                 }
-                else if (Util.areItemStacksEqual(stackInSlot, remainingItemsInSlot))
+                else if (InventoryUtils.areItemStacksEqual(stackInSlot, remainingItemsInSlot))
                 {
                     remainingItemsInSlot.grow(stackInSlot.getCount());
                     this.craftMatrix.setInventorySlotContents(slot, remainingItemsInSlot);
                 }
                 else
                 {
-                    Util.dropItemStacksInWorld(this.world, this.pos, remainingItemsInSlot, -1, true);
+                    EntityUtils.dropItemStacksInWorld(this.world, this.pos, remainingItemsInSlot, -1, true);
                 }
             }
         }

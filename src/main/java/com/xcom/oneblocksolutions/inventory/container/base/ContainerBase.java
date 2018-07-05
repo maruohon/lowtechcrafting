@@ -7,7 +7,6 @@ import com.xcom.oneblocksolutions.inventory.slot.SlotItemHandlerGeneric;
 import com.xcom.oneblocksolutions.inventory.wrapper.PlayerInvWrapperNoSync;
 import com.xcom.oneblocksolutions.network.PacketHandler;
 import com.xcom.oneblocksolutions.network.message.MessageSyncSlot;
-import com.xcom.oneblocksolutions.tileentity.TileEntityCrafting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -15,6 +14,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -22,11 +22,11 @@ public class ContainerBase extends Container
 {
     public static final int GUI_ACTION_SCROLL_MOVE  = 0;
     public static final int GUI_ACTION_SCROLL_SET   = 1;
-    protected final TileEntityCrafting te;
     protected final EntityPlayer player;
     protected final boolean isClient;
     protected final InventoryPlayer inventoryPlayer;
     protected final IItemHandlerModifiable playerInv;
+    protected final IItemHandler inventory;
     protected MergeSlotRange customInventorySlots;
     protected MergeSlotRange playerMainSlots;
     protected MergeSlotRange playerHotbarSlots;
@@ -36,10 +36,10 @@ public class ContainerBase extends Container
     protected List<MergeSlotRange> mergeSlotRangesExtToPlayer;
     protected List<MergeSlotRange> mergeSlotRangesPlayerToExt;
 
-    public ContainerBase(EntityPlayer player, TileEntityCrafting te)
+    public ContainerBase(EntityPlayer player, IItemHandler inventory)
     {
         this.player = player;
-        this.te = te;
+        this.inventory = inventory;
         this.isClient = player.getEntityWorld().isRemote;
         this.inventoryPlayer = player.inventory;
         this.playerInv = new PlayerInvWrapperNoSync(player.inventory);
@@ -56,9 +56,18 @@ public class ContainerBase extends Container
     }
 
     @Override
-    public boolean canInteractWith(EntityPlayer player)
+    public boolean canInteractWith(EntityPlayer playerIn)
     {
-        return this.te.isInvalid() == false;
+        return true;
+    }
+
+    protected void reAddSlots(int playerInventoryX, int playerInventoryY)
+    {
+        this.inventorySlots.clear();
+        this.inventoryItemStacks.clear();
+
+        this.addCustomInventorySlots();
+        this.addPlayerInventorySlots(playerInventoryX, playerInventoryY);
     }
 
     /**
