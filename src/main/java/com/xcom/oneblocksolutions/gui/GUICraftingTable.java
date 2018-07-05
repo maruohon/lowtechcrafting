@@ -47,7 +47,7 @@ public class GUICraftingTable extends GuiContainer{
     {
         super.drawGuiContainerForegroundLayer(mouseX, mouseY);
 
-        String s = this.te.hasCustomName() ? this.te.getName() : I18n.format(this.te.getName());
+        String s = this.te.hasCustomName() ? this.te.getName() : I18n.format("tile.craftingtable.name");
         this.fontRenderer.drawString(s, this.xSize / 2 - this.fontRenderer.getStringWidth(s) / 2, 5, 0x404040);
         this.fontRenderer.drawString(I18n.format("container.inventory"), 8, 71, 0x404040);
     }
