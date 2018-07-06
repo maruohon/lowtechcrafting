@@ -55,6 +55,13 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
         IItemHandler invGrid = this.isClient ? new ItemStackHandler(9) : new InvWrapper(this.invCraftingGrid);
         IItemHandler invOutput = this.isClient ? new ItemStackHandler(1) : this.invCraftingWrapper;
 
+        // The output slot must be slot number 0, and the crafting grid slots must follow,
+        // for the vanilla RecipeBook Ghost Recipes to be rendered at the correct locations
+        this.craftingSlot = this.inventorySlots.size();
+
+        // The first slot in the inventory is the crafting output slot
+        this.addSlotToContainer(new SlotItemHandlerCraftResult(this.invCraftingGrid, this.invCraftResult, invOutput, 0, 124, 35, this.player));
+
         for (int r = 0; r < 3; r++)
         {
             for (int c = 0; c < 3; c++)
@@ -62,11 +69,6 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
                 this.addSlotToContainer(new SlotItemHandlerGeneric(invGrid, r * 3 + c, posX + c * 18, posY + r * 18));
             }
         }
-
-        this.craftingSlot = this.inventorySlots.size();
-
-        // The first slot in the inventory is the crafting output slot
-        this.addSlotToContainer(new SlotItemHandlerCraftResult(this.invCraftingGrid, this.invCraftResult, invOutput, 0, 124, 35, this.player));
 
         // Update the output
         this.invCraftingGrid.markDirty();
