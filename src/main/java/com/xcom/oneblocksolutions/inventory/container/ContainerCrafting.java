@@ -103,15 +103,18 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     @Override
     protected void rightClickSlot(int slotNum, EntityPlayer player)
     {
-        super.leftClickSlot(slotNum, player);
-        /*
-        // Not a crafting output slot
-        if (slotNum != this.craftingSlot)
+        // Crafting output slot: just take the full stack as you would when left clicking
+        if (slotNum == this.craftingSlot)
+        {
+            super.leftClickSlot(slotNum, player);
+        }
+        else
         {
             super.rightClickSlot(slotNum, player);
-            return;
         }
 
+        /*
+        // This implements a craft-one-stack-on-right-click functionality
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
         if (slot != null && slot.getHasStack())
