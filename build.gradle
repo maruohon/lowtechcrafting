@@ -12,14 +12,6 @@ buildscript {
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'maven'
-
-repositories {
-    // JEI
-    maven {
-        url "http://dvs1.progwml6.com/files/maven"
-    }
-}
 
 ext.configFile = file "build.properties"
 
@@ -60,7 +52,7 @@ minecraft {
         mod_version = mod_version + "." + new Date().format('yyyyMMdd.HHmmss')
     }
 
-    replaceIn "Reference.java"
+    replaceIn "reference/Reference.java"
     replace "@MOD_VERSION@", mod_version
 
     if (project.hasProperty("signJarKeyStore")) {

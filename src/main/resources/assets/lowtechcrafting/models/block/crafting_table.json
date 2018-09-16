@@ -1,0 +1,12 @@
+{
+    "parent": "block/cube",
+    "textures": {
+        "particle": "lowtechcrafting:blocks/crafting_table_front",
+        "down":     "lowtechcrafting:blocks/crafting_table_bottom",
+        "up":       "lowtechcrafting:blocks/crafting_table_top",
+        "north":    "lowtechcrafting:blocks/crafting_table_front",
+        "east":     "lowtechcrafting:blocks/crafting_table_side",
+        "south":    "lowtechcrafting:blocks/crafting_table_side",
+        "west":     "lowtechcrafting:blocks/crafting_table_front"
+    }
+}
