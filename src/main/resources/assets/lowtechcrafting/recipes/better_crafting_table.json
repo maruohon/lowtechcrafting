@@ -1,0 +1,26 @@
+{
+    "type" : "minecraft:crafting_shaped",
+    "conditions": [
+        {
+            "type" : "minecraft:item_exists",
+            "item" : "lowtechcrafting:crafting_table"
+        }
+    ],
+    "group" : "lowtechcrafting:crafting_table",
+    "result" :
+    {
+        "item" : "lowtechcrafting:crafting_table",
+        "data" : 0
+    },
+    "pattern":
+    [
+        " C ",
+        " H ",
+        " C "
+    ],
+    "key":
+    {
+        "C" : { "item" : "#CRAFTING_TABLE" },
+        "H" : { "item" : "#HOPPER" }
+    }
+}
