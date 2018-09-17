@@ -111,7 +111,14 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
         // Crafting grid slots
         else
         {
-            return this.inventoryCraftingGridBase.extractItem(slot - 1, amount, simulate);
+            ItemStack stack = this.inventoryCraftingGridBase.extractItem(slot - 1, amount, simulate);
+
+            if (simulate == false)
+            {
+                this.inventoryCraftingWrapper.markDirty();
+            }
+
+            return stack;
         }
     }
 
