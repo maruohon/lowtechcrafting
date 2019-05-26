@@ -224,7 +224,7 @@ public class TileEntityCrafting extends TileEntity
         @Override
         public int getSlotLimit(int slot)
         {
-            return this.inventoryCrafter.getSlotLimit(slot);
+            return slot == 0 ? this.inventoryCrafter.getSlotLimit(slot) : 1;
         }
 
         @Override
