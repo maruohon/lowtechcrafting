@@ -1,14 +1,14 @@
 package fi.dy.masa.lowtechcrafting.inventory.slot;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.SlotItemHandler;
 import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSelective;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSyncable;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.SlotItemHandler;
 
 public class SlotItemHandlerGeneric extends SlotItemHandler
 {
@@ -109,7 +109,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     }
 
     @Override
-    public boolean canTakeStack(EntityPlayer player)
+    public boolean canTakeStack(PlayerEntity player)
     {
         if (this.getItemHandler() instanceof IItemHandlerSelective)
         {

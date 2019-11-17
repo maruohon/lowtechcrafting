@@ -1,12 +1,12 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.wrapper.PlayerArmorInvWrapper;
 
 public class PlayerArmorInvWrapperLimited extends PlayerArmorInvWrapper
 {
-    public PlayerArmorInvWrapperLimited(InventoryPlayer inv)
+    public PlayerArmorInvWrapperLimited(PlayerInventory inv)
     {
         super(inv);
     }

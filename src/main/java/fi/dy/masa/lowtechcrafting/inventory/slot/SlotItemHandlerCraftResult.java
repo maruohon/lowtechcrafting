@@ -1,25 +1,25 @@
 package fi.dy.masa.lowtechcrafting.inventory.slot;
 
-import com.google.common.collect.Lists;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.InventoryCrafting;
+import com.google.common.collect.ImmutableList;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraftforge.items.IItemHandler;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
+import net.minecraftforge.items.IItemHandler;
 
 public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
 {
-    private final EntityPlayer player;
-    private final InventoryCrafting craftMatrix;
+    private final PlayerEntity player;
+    private final CraftingInventory craftMatrix;
     private final ItemHandlerCraftResult craftResult;
     private int amountCrafted;
 
     public SlotItemHandlerCraftResult(
-            InventoryCrafting craftMatrix,
+            CraftingInventory craftMatrix,
             ItemHandlerCraftResult craftResult,
             IItemHandler inventoryWrapper,
-            int index, int xPosition, int yPosition, EntityPlayer player)
+            int index, int xPosition, int yPosition, PlayerEntity player)
     {
         super(inventoryWrapper, index, xPosition, yPosition);
 
@@ -58,16 +58,16 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
         if (this.amountCrafted > 0)
         {
             stack.onCrafting(this.player.getEntityWorld(), this.player, this.amountCrafted);
-            net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
+            net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
         }
 
         this.amountCrafted = 0;
 
-        IRecipe recipe = this.craftResult.getRecipe();
+        IRecipe<?> recipe = this.craftResult.getRecipe();
 
         if (recipe != null && recipe.isDynamic() == false)
         {
-            this.player.unlockRecipes(Lists.newArrayList(recipe));
+            this.player.unlockRecipes(ImmutableList.of(recipe));
             this.craftResult.setRecipe(null);
         }
     }

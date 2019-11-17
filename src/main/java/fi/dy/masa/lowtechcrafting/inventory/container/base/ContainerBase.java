@@ -2,29 +2,32 @@ package fi.dy.masa.lowtechcrafting.inventory.container.base;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IContainerListener;
-import net.minecraft.inventory.Slot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.inventory.container.IContainerListener;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.SlotItemHandler;
+import net.minecraft.util.NonNullList;
 import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.PlayerInvWrapperNoSync;
 import fi.dy.masa.lowtechcrafting.network.PacketHandler;
 import fi.dy.masa.lowtechcrafting.network.message.MessageSyncSlot;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerBase extends Container
+public class ContainerBase extends Container //<C extends net.minecraft.inventory.IInventory> extends RecipeBookContainer<C>
 {
     public static final int GUI_ACTION_SCROLL_MOVE  = 0;
     public static final int GUI_ACTION_SCROLL_SET   = 1;
-    protected final EntityPlayer player;
+    protected final PlayerEntity player;
     protected final boolean isClient;
-    protected final InventoryPlayer inventoryPlayer;
+    protected final PlayerInventory playerInventory;
     protected final IItemHandlerModifiable playerInv;
     protected final IItemHandler inventory;
     protected MergeSlotRange customInventorySlots;
@@ -36,12 +39,17 @@ public class ContainerBase extends Container
     protected List<MergeSlotRange> mergeSlotRangesExtToPlayer;
     protected List<MergeSlotRange> mergeSlotRangesPlayerToExt;
 
-    public ContainerBase(EntityPlayer player, IItemHandler inventory)
+    protected final List<IContainerListener> listeners = new ArrayList<>();
+    protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
+
+    public ContainerBase(int windowId, ContainerType<?> type, PlayerEntity player, IItemHandler inventory)
     {
+        super(type, windowId);
+
         this.player = player;
         this.inventory = inventory;
         this.isClient = player.getEntityWorld().isRemote;
-        this.inventoryPlayer = player.inventory;
+        this.playerInventory = player.inventory;
         this.playerInv = new PlayerInvWrapperNoSync(player.inventory);
         this.mergeSlotRangesExtToPlayer = new ArrayList<MergeSlotRange>();
         this.mergeSlotRangesPlayerToExt = new ArrayList<MergeSlotRange>();
@@ -56,7 +64,7 @@ public class ContainerBase extends Container
     }
 
     @Override
-    public boolean canInteractWith(EntityPlayer playerIn)
+    public boolean canInteractWith(PlayerEntity playerIn)
     {
         return true;
     }
@@ -95,7 +103,7 @@ public class ContainerBase extends Container
         {
             for (int j = 0; j < 9; j++)
             {
-                this.addSlotToContainer(new SlotItemHandlerGeneric(this.playerInv, i * 9 + j + 9, posX + j * 18, posY + i * 18));
+                this.addSlot(new SlotItemHandlerGeneric(this.playerInv, i * 9 + j + 9, posX + j * 18, posY + i * 18));
             }
         }
 
@@ -105,7 +113,7 @@ public class ContainerBase extends Container
         // Player inventory hotbar
         for (int i = 0; i < 9; i++)
         {
-            this.addSlotToContainer(new SlotItemHandlerGeneric(this.playerInv, i, posX + i * 18, posY + 58));
+            this.addSlot(new SlotItemHandlerGeneric(this.playerInv, i, posX + i * 18, posY + 58));
         }
 
         this.playerMainSlotsIncHotbar = new MergeSlotRange(playerInvStart, 36);
@@ -117,7 +125,7 @@ public class ContainerBase extends Container
         this.playerOffhandSlots = new MergeSlotRange(this.inventorySlots.size(), 1);
 
         // Add the Offhand slot
-        this.addSlotToContainer(new SlotItemHandlerGeneric(this.playerInv, 40, posX, posY)
+        this.addSlot(new SlotItemHandlerGeneric(this.playerInv, 40, posX, posY)
         {
             @Override
             public String getSlotTexture()
@@ -127,7 +135,7 @@ public class ContainerBase extends Container
         });
     }
 
-    public EntityPlayer getPlayer()
+    public PlayerEntity getPlayer()
     {
         return this.player;
     }
@@ -152,7 +160,7 @@ public class ContainerBase extends Container
     {
         return (slot instanceof SlotItemHandler) &&
 //                (slot instanceof SlotItemHandlerCraftResult) == false &&
-                this.inventoryPlayer.getItemStack().isEmpty() == false;
+                this.playerInventory.getItemStack().isEmpty() == false;
     }
 
     @Override
@@ -166,6 +174,35 @@ public class ContainerBase extends Container
         Slot slot = this.getSlot(slotId);
 
         return (slot instanceof SlotItemHandlerGeneric) ? (SlotItemHandlerGeneric) slot : null;
+    }
+
+    // Override because the vanilla lists are now private in 1.14 >_>
+    @Override
+    public void addListener(IContainerListener listener)
+    {
+        if (this.listeners.contains(listener) == false)
+        {
+            this.listeners.add(listener);
+            listener.sendAllContents(this, this.getInventory());
+            this.detectAndSendChanges();
+        }
+    }
+
+    // Override because the vanilla lists are now private in 1.14 >_>
+    @Override
+    public void removeListener(IContainerListener listener)
+    {
+        this.listeners.remove(listener);
+    }
+
+    // Override because the vanilla lists are now private in 1.14 >_>
+    @Override
+    protected Slot addSlot(Slot slotIn)
+    {
+        slotIn.slotNumber = this.inventorySlots.size();
+        this.inventorySlots.add(slotIn);
+        this.inventoryItemStacks.add(ItemStack.EMPTY);
+        return slotIn;
     }
 
     protected void syncCursorStackToClient()
@@ -183,13 +220,15 @@ public class ContainerBase extends Container
 
     protected void syncStackToClient(int slotNum, ItemStack stack)
     {
-        for (int i = 0; i < this.listeners.size(); i++)
+        for (int i = 0; i < this.listeners.size(); ++i)
         {
             IContainerListener listener = this.listeners.get(i);
 
-            if (listener instanceof EntityPlayerMP)
+            //listener.sendSlotContents(this, slotNum, stack);
+            if (listener instanceof ServerPlayerEntity)
             {
-                PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.windowId, slotNum, stack), (EntityPlayerMP) listener);
+                ServerPlayerEntity player = (ServerPlayerEntity) listener;
+                PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.windowId, slotNum, stack), player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
             }
         }
     }
@@ -235,23 +274,14 @@ public class ContainerBase extends Container
                 {
                     prevStack = currentStack.isEmpty() ? ItemStack.EMPTY : currentStack.copy();
                     this.inventoryItemStacks.set(slot, prevStack);
-
-                    for (int i = 0; i < this.listeners.size(); i++)
-                    {
-                        IContainerListener listener = this.listeners.get(i);
-
-                        if (listener instanceof EntityPlayerMP)
-                        {
-                            PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.windowId, slot, prevStack), (EntityPlayerMP) listener);
-                        }
-                    }
+                    this.syncStackToClient(slot, prevStack);
                 }
             }
         }
     }
 
     @Override
-    public ItemStack transferStackInSlot(EntityPlayer player, int slotNum)
+    public ItemStack transferStackInSlot(PlayerEntity player, int slotNum)
     {
         this.transferStackFromSlot(player, slotNum);
         return ItemStack.EMPTY;
@@ -265,7 +295,7 @@ public class ContainerBase extends Container
      * the list of "priority slot" SlotRanges, and after that come the rest of the "custom inventory".
      * Returns false if no items were moved, true otherwise
      */
-    protected boolean transferStackFromSlot(EntityPlayer player, int slotNum)
+    protected boolean transferStackFromSlot(PlayerEntity player, int slotNum)
     {
         Slot slot = this.getSlot(slotNum);
 
@@ -289,7 +319,7 @@ public class ContainerBase extends Container
         return this.transferStackToSlotRange(player, slotNum, this.playerMainSlotsIncHotbar, true);
     }
 
-    protected boolean transferStackFromPlayerMainInventory(EntityPlayer player, int slotNum)
+    protected boolean transferStackFromPlayerMainInventory(PlayerEntity player, int slotNum)
     {
         if (this.transferStackToSlotRange(player, slotNum, this.playerArmorSlots, false))
         {
@@ -304,7 +334,7 @@ public class ContainerBase extends Container
         return this.transferStackToSlotRange(player, slotNum, this.customInventorySlots, false);
     }
 
-    protected boolean transferStackToPrioritySlots(EntityPlayer player, int slotNum, boolean reverse)
+    protected boolean transferStackToPrioritySlots(PlayerEntity player, int slotNum, boolean reverse)
     {
         boolean ret = false;
 
@@ -316,7 +346,7 @@ public class ContainerBase extends Container
         return ret;
     }
 
-    protected boolean transferStackToSlotRange(EntityPlayer player, int slotNum, MergeSlotRange slotRange, boolean reverse)
+    protected boolean transferStackToSlotRange(PlayerEntity player, int slotNum, MergeSlotRange slotRange, boolean reverse)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
@@ -449,7 +479,49 @@ public class ContainerBase extends Container
         this.mergeSlotRangesPlayerToExt.add(new MergeSlotRange(start, numSlots, existingOnly));
     }
 
-    public void performGuiAction(EntityPlayer player, int action, int element)
+    public void performGuiAction(PlayerEntity player, int action, int element)
     {
     }
+
+    /*
+    @Override
+    public void func_201771_a(RecipeItemHelper p_201771_1_)
+    {
+    }
+
+    @Override
+    public void clear()
+    {
+    }
+
+    @Override
+    public boolean matches(IRecipe<? super C> recipeIn)
+    {
+        return false;
+    }
+
+    @Override
+    public int getOutputSlot()
+    {
+        return 0;
+    }
+
+    @Override
+    public int getWidth()
+    {
+        return 3;
+    }
+
+    @Override
+    public int getHeight()
+    {
+        return 3;
+    }
+
+    @Override
+    public int getSize()
+    {
+        return 10;
+    }
+    */
 }

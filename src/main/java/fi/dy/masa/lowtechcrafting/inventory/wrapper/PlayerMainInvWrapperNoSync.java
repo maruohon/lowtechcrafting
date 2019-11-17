@@ -1,15 +1,15 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import net.minecraftforge.items.wrapper.RangedWrapper;
 
 public class PlayerMainInvWrapperNoSync extends RangedWrapper
 {
-    private final InventoryPlayer inventoryPlayer;
+    private final PlayerInventory inventoryPlayer;
 
-    public PlayerMainInvWrapperNoSync(InventoryPlayer inv)
+    public PlayerMainInvWrapperNoSync(PlayerInventory inv)
     {
         super(new InvWrapper(inv), 0, inv.mainInventory.size());
 
@@ -28,7 +28,7 @@ public class PlayerMainInvWrapperNoSync extends RangedWrapper
 
             if (stackSlot.isEmpty() == false)
             {
-                if (this.getInventoryPlayer().player.getEntityWorld().isRemote)
+                if (this.getPlayerInventory().player.getEntityWorld().isRemote)
                 {
                     stackSlot.setAnimationsToGo(5);
                 }
@@ -38,7 +38,7 @@ public class PlayerMainInvWrapperNoSync extends RangedWrapper
         return stackRemaining;
     }
 
-    public InventoryPlayer getInventoryPlayer()
+    public PlayerInventory getPlayerInventory()
     {
         return inventoryPlayer;
     }

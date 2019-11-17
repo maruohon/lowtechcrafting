@@ -2,106 +2,115 @@ package fi.dy.masa.lowtechcrafting.blocks;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.block.material.MaterialColor;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import fi.dy.masa.lowtechcrafting.LowTechCrafting;
-import fi.dy.masa.lowtechcrafting.reference.Names;
-import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
-import fi.dy.masa.lowtechcrafting.util.BlockUtil;
 
 public class BlockCraftingTable extends Block
 {
+    public static final ResourceLocation CONTENTS = new ResourceLocation("contents");
+
     public BlockCraftingTable()
     {
-        super(Material.WOOD);
+        super(Block.Properties.create(
+                Material.WOOD,
+                MaterialColor.WOOD)
+                .hardnessAndResistance(2.5F)
+                .sound(SoundType.WOOD));
 
-        this.setTranslationKey(Names.CRAFTING_TABLE);
-        this.setHardness(2.5f);
-        this.setCreativeTab(CreativeTabs.REDSTONE);
-        this.setSoundType(SoundType.WOOD);
+        this.setDefaultState(this.stateContainer.getBaseState());
     }
 
     @Override
-    public boolean hasTileEntity(IBlockState state)
+    public boolean hasTileEntity(BlockState state)
     {
         return true;
     }
 
     @Override
-    public TileEntity createTileEntity(World world, IBlockState state)
+    public TileEntity createTileEntity(BlockState state, IBlockReader world)
     {
         return new TileEntityCrafting();
     }
 
     public boolean isTileEntityValid(TileEntity te)
     {
-        return te != null && te.isInvalid() == false;
+        return te != null && te.isRemoved() == false;
     }
 
     @Override
-    public void breakBlock(World world, BlockPos pos, IBlockState state)
+    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
     {
-        TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);
-
-        if (te != null)
+        if (state.getBlock() != newState.getBlock())
         {
-            te.dropInventories();
-            world.updateComparatorOutputLevel(pos, this);
+            TileEntity te = world.getTileEntity(pos);
+
+            if (te instanceof TileEntityCrafting)
+            {
+                ((TileEntityCrafting) te).dropInventories();
+                world.updateComparatorOutputLevel(pos, this);
+            }
+
+            world.removeTileEntity(pos);
         }
-
-        world.removeTileEntity(pos);
     }
 
     @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
+    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
     {
-        TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);
+        TileEntity te = world.getTileEntity(pos);
 
-        if (te != null)
+        if (te instanceof TileEntityCrafting)
         {
-            NBTTagCompound nbt = stack.getTagCompound();
+            TileEntityCrafting tec = (TileEntityCrafting) te;
+            CompoundNBT nbt = stack.getTag();
 
             // If the ItemStack has a tag containing saved TE data, restore it to the just placed block/TE
-            if (nbt != null && nbt.hasKey("BlockEntityTag", Constants.NBT.TAG_COMPOUND))
+            if (nbt != null && nbt.contains("BlockEntityTag", Constants.NBT.TAG_COMPOUND))
             {
-                te.readFromNBTCustom(nbt.getCompoundTag("BlockEntityTag"));
+                tec.readFromNBTCustom(nbt.getCompound("BlockEntityTag"));
             }
             else
             {
-                if (te instanceof TileEntityCrafting && stack.hasDisplayName())
+                if (stack.hasDisplayName())
                 {
-                    ((TileEntityCrafting) te).setInventoryName(stack.getDisplayName());
+                    tec.setInventoryName(stack.getDisplayName().getString());
                 }
             }
         }
     }
 
     @Override
-    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand,
-                                    EnumFacing side, float hitX, float hitY, float hitZ)
+    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
     {
-        TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);
+        TileEntity te = world.getTileEntity(pos);
 
-        if (te != null && this.isTileEntityValid(te))
+        if (te instanceof TileEntityCrafting && this.isTileEntityValid(te))
         {
-            if (world.isRemote == false)
+            if (world.isRemote == false && player instanceof ServerPlayerEntity)
             {
-                player.openGui(LowTechCrafting.instance, 0, world, pos.getX(), pos.getY(), pos.getZ());
+                NetworkHooks.openGui((ServerPlayerEntity) player, (TileEntityCrafting) te, pos);
             }
 
             return true;
@@ -111,20 +120,24 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public boolean hasComparatorInputOverride(IBlockState state)
+    public boolean hasComparatorInputOverride(BlockState state)
     {
         return true;
     }
 
     @Override
-    public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos)
+    public int getComparatorInputOverride(BlockState state, World world, BlockPos pos)
     {
-        TileEntityCrafting te = BlockUtil.getTileEntitySafely(world, pos, TileEntityCrafting.class);
+        TileEntity te = world.getTileEntity(pos);
 
         if (te != null && this.isTileEntityValid(te))
         {
-            IItemHandler inv = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.NORTH);
-            return calcRedstoneFromInventory(inv);
+            LazyOptional<IItemHandler> optional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.NORTH);
+
+            if (optional.isPresent())
+            {
+                return calcRedstoneFromInventory(optional.orElse(null));
+            }
         }
 
         return 0;

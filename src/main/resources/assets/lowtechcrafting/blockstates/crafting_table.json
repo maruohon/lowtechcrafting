@@ -1,7 +1,5 @@
 {
   "variants": {
-    "normal": {
-      "model": "lowtechcrafting:crafting_table"
-    }
+    "": { "model": "lowtechcrafting:block/crafting_table" }
   }
 }

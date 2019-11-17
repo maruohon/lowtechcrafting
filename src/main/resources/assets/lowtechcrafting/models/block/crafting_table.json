@@ -1,12 +1,12 @@
 {
-    "parent": "block/cube",
+    "parent": "minecraft:block/cube",
     "textures": {
-        "particle": "lowtechcrafting:blocks/crafting_table_front",
-        "down":     "lowtechcrafting:blocks/crafting_table_bottom",
-        "up":       "lowtechcrafting:blocks/crafting_table_top",
-        "north":    "lowtechcrafting:blocks/crafting_table_front",
-        "east":     "lowtechcrafting:blocks/crafting_table_side",
-        "south":    "lowtechcrafting:blocks/crafting_table_side",
-        "west":     "lowtechcrafting:blocks/crafting_table_front"
+        "particle": "lowtechcrafting:block/crafting_table_front",
+        "down":     "lowtechcrafting:block/crafting_table_top",
+        "up":       "lowtechcrafting:block/crafting_table_top",
+        "north":    "lowtechcrafting:block/crafting_table_front",
+        "south":    "lowtechcrafting:block/crafting_table_front",
+        "west":     "lowtechcrafting:block/crafting_table_side",
+        "east":     "lowtechcrafting:block/crafting_table_side"
     }
 }

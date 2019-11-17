@@ -1,27 +1,31 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
-import javax.annotation.Nonnull;
+import java.util.Optional;
 import javax.annotation.Nullable;
-import net.minecraft.client.util.RecipeItemHelper;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.ICraftingRecipe;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.RecipeItemHelper;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandlerModifiable;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
+import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
-public class InventoryCraftingWrapper extends InventoryCrafting
+public class InventoryCraftingWrapper extends CraftingInventory
 {
     private final int inventoryWidth;
     private final int inventoryHeight;
     private final ItemHandlerCraftResult craftResult;
+    private final NonNullList<ItemStack> gridCache;
     private IItemHandlerModifiable craftMatrix;
-    @Nullable
-    private EntityPlayerMP player;
+    private Optional<ICraftingRecipe> lastCraftedRecipe = Optional.empty();
+    @Nullable private ICraftingRecipe recipe;
+    @Nullable private World world;
     private boolean inhibitResultUpdate;
+    private boolean gridDirty;
 
     public InventoryCraftingWrapper(int width, int height, IItemHandlerModifiable craftMatrix, ItemHandlerCraftResult resultInventory)
     {
@@ -31,16 +35,18 @@ public class InventoryCraftingWrapper extends InventoryCrafting
         this.inventoryHeight = height;
         this.craftMatrix = craftMatrix;
         this.craftResult = resultInventory;
+        this.gridCache = NonNullList.withSize(width * height, ItemStack.EMPTY);
     }
 
-    public void setPlayer(EntityPlayerMP player)
+    public void setWorld(World world)
     {
-        this.player = player;
+        this.world = world;
     }
 
     public void setCraftMatrix(IItemHandlerModifiable craftMatrix)
     {
         this.craftMatrix = craftMatrix;
+        this.updateGridCache();
     }
 
     public void setInhibitResultUpdate(boolean inhibitUpdate)
@@ -88,28 +94,44 @@ public class InventoryCraftingWrapper extends InventoryCrafting
         return true;
     }
 
-    @Override
-    public ItemStack getStackInRowAndColumn(int row, int column)
+    private void updateGridCache()
     {
-        if (row >= 0 && row < this.inventoryWidth && column >= 0 && column <= this.inventoryHeight)
+        for (int slot = 0; slot < this.craftMatrix.getSlots(); ++slot)
         {
-            return this.getStackInSlot(row + column * this.inventoryWidth);
+            this.checkUpdateGridCacheForSlot(slot);
         }
+    }
 
-        return  ItemStack.EMPTY;
+    public void checkUpdateGridCacheForSlot(int slot)
+    {
+        ItemStack stackNew = this.craftMatrix.getStackInSlot(slot);
+
+        if (InventoryUtils.areItemStacksEqual(this.gridCache.get(slot), stackNew) == false)
+        {
+            this.gridCache.set(slot, stackNew.isEmpty() ? ItemStack.EMPTY : stackNew.copy());
+            this.gridDirty = true;
+        }
     }
 
     @Override
     public ItemStack removeStackFromSlot(int slot)
     {
-        return this.craftMatrix.extractItem(slot, this.craftMatrix.getStackInSlot(slot).getCount(), false);
+        ItemStack stack = this.craftMatrix.extractItem(slot, this.craftMatrix.getStackInSlot(slot).getCount(), false);
+
+        if (stack.isEmpty() == false)
+        {
+            this.gridCache.set(slot, ItemStack.EMPTY);
+            this.gridDirty = true;
+        }
+
+        return stack;
     }
 
     @Override
     public ItemStack decrStackSize(int slot, int amount)
     {
         // This goes against the Forge IItemHandler contract,
-        // but the vanilla ServerRecipeBoookHelper goes into an infinite loop
+        // but the vanilla ServerRecipeBookHelper goes into an infinite loop
         // if the original stack instance doesn't shrink... >_>
 
         ItemStack stackOrig = this.craftMatrix.getStackInSlot(slot);
@@ -120,11 +142,7 @@ public class InventoryCraftingWrapper extends InventoryCrafting
         stackOrig.shrink(amount);
 
         this.craftMatrix.setStackInSlot(slot, stackOrig); // To mark the underlying inventory dirty
-
-        if (stackReturn.isEmpty() == false)
-        {
-            this.markDirty();
-        }
+        this.checkUpdateGridCacheForSlot(slot);
 
         return stackReturn;
     }
@@ -133,7 +151,7 @@ public class InventoryCraftingWrapper extends InventoryCrafting
     public void setInventorySlotContents(int slot, ItemStack stack)
     {
         this.craftMatrix.setStackInSlot(slot, stack);
-        this.markDirty();
+        this.checkUpdateGridCacheForSlot(slot);
     }
 
     @Override
@@ -150,19 +168,11 @@ public class InventoryCraftingWrapper extends InventoryCrafting
             this.craftMatrix.setStackInSlot(slot, ItemStack.EMPTY);
         }
 
-        this.markDirty();
+        this.updateGridCache();
     }
 
     @Override
-    public void markDirty()
-    {
-        super.markDirty();
-
-        this.updateCraftingOutput();
-    }
-
-    @Override
-    public boolean isUsableByPlayer(EntityPlayer player)
+    public boolean isUsableByPlayer(PlayerEntity player)
     {
         return true;
     }
@@ -173,28 +183,43 @@ public class InventoryCraftingWrapper extends InventoryCrafting
         return true;
     }
 
-    private void setCraftResult(@Nonnull ItemStack stack)
+    private void setCraftResult(ItemStack stack)
     {
-        this.craftResult.setStackInSlot(0, stack);
+        this.craftResult.setStackInSlot(0, stack.isEmpty() ? ItemStack.EMPTY : stack.copy());
     }
 
     public void updateCraftingOutput()
     {
-        if (this.inhibitResultUpdate == false && this.player != null && this.player.getEntityWorld().isRemote == false)
+        if (this.gridDirty && this.inhibitResultUpdate == false && this.world != null && this.world.isRemote == false)
         {
-            World world = this.player.getEntityWorld();
-            IRecipe recipe = CraftingManager.findMatchingRecipe(this, world);
+            Optional<ICraftingRecipe> optional = this.lastCraftedRecipe;
+
+            if (optional.isPresent() == false || optional.get().matches(this, this.world) == false)
+            {
+                optional = this.world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, this, this.world);
+            }
+
             ItemStack stack = ItemStack.EMPTY;
 
-            if (recipe != null)
-            //&& (recipe.isHidden() || world.getGameRules().getBoolean("doLimitedCrafting") == false || this.player.getRecipeBook().containsRecipe(recipe)))
+            if (optional.isPresent())
             {
+                ICraftingRecipe recipe = optional.get();
                 this.craftResult.setRecipe(recipe);
+                this.recipe = recipe;
                 stack = recipe.getCraftingResult(this);
             }
 
             this.setCraftResult(stack);
             //player.connection.sendPacket(new SPacketSetSlot(this.windowId, 0, stack));
+            this.gridDirty = false;
+        }
+    }
+
+    public void onCraft()
+    {
+        if (this.recipe != null)
+        {
+            this.lastCraftedRecipe = Optional.of(this.recipe);
         }
     }
 
@@ -205,15 +230,15 @@ public class InventoryCraftingWrapper extends InventoryCrafting
 
         for (int slot = 0; slot < invSize; slot++)
         {
-            recipeItemHelper.accountStack(this.craftMatrix.getStackInSlot(slot));
+            recipeItemHelper.accountPlainStack(this.craftMatrix.getStackInSlot(slot));
         }
     }
 
-    public void openInventory(EntityPlayer player)
+    public void openInventory(PlayerEntity player)
     {
     }
 
-    public void closeInventory(EntityPlayer player)
+    public void closeInventory(PlayerEntity player)
     {
     }
 

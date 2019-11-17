@@ -1,6 +1,6 @@
 package fi.dy.masa.lowtechcrafting.util;
 
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -46,23 +46,25 @@ public class EntityUtils
             ItemStack dropStack = stack.copy();
             dropStack.setCount(num);
 
-            EntityItem entityItem = new EntityItem(worldIn, pos.x, pos.y, pos.z, dropStack);
+            ItemEntity item = new ItemEntity(worldIn, pos.x, pos.y, pos.z, dropStack);
+            item.setDefaultPickupDelay();
+
+            Vec3d motion;
 
             if (randomMotion)
             {
                 double motionScale = 0.04d;
-                entityItem.motionX = worldIn.rand.nextGaussian() * motionScale;
-                entityItem.motionY = worldIn.rand.nextGaussian() * motionScale + 0.3d;
-                entityItem.motionZ = worldIn.rand.nextGaussian() * motionScale;
+                motion = new Vec3d( worldIn.rand.nextGaussian() * motionScale,
+                                    worldIn.rand.nextGaussian() * motionScale + 0.3,
+                                    worldIn.rand.nextGaussian() * motionScale);
             }
             else
             {
-                entityItem.motionX = 0d;
-                entityItem.motionY = 0d;
-                entityItem.motionZ = 0d;
+                motion = new Vec3d(0, 0, 0);
             }
 
-            worldIn.spawnEntity(entityItem);
+            item.setMotion(motion);
+            worldIn.addEntity(item);
         }
     }
 }

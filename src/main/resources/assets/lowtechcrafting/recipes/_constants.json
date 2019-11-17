@@ -1,4 +1,0 @@
-[
-    { "name" : "CRAFTING_TABLE",        "ingredient": { "item" : "minecraft:crafting_table"         } },
-    { "name" : "HOPPER",                "ingredient": { "item" : "minecraft:hopper"                 } }
-]

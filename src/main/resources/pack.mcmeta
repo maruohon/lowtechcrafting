@@ -1,7 +1,6 @@
 {
-    "pack":
-    {
-        "description": "Low Tech Crafting Resources",
-        "pack_format": 3
+    "pack": {
+        "pack_format": 4,
+        "description": "Low Tech Crafting Resources"
     }
 }

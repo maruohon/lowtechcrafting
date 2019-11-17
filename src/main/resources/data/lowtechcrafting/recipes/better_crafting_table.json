@@ -1,0 +1,20 @@
+{
+    "type" : "minecraft:crafting_shaped",
+    "conditions": [
+        {
+            "type" : "forge:item_exists",
+            "item" : "lowtechcrafting:crafting_table"
+        }
+    ],
+    "group" : "lowtechcrafting:crafting_table",
+    "result" : { "item" : "lowtechcrafting:crafting_table" },
+    "pattern": [
+        " C ",
+        " H ",
+        " C "
+    ],
+    "key": {
+        "C" : { "item" : "minecraft:crafting_table" },
+        "H" : { "item" : "minecraft:hopper" }
+    }
+}

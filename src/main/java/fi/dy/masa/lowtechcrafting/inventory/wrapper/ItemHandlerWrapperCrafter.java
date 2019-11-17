@@ -1,28 +1,28 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
+import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 
-public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize, INBTSerializable<NBTTagCompound>
+public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize, INBTSerializable<CompoundNBT>
 {
     private final IItemHandlerModifiable inventoryCraftingGridBase;
+    private final IItemHandler inventoryOutputBuffer;
     private final IItemHandler inventoryCraftingOutput;
-    private final IItemHandler inventoryOutput;
     private final InventoryCraftingWrapper inventoryCraftingWrapper;
 
     public ItemHandlerWrapperCrafter(
             IItemHandlerModifiable inventoryCraftingGridBase,
-            IItemHandler inventoryOutput,
+            IItemHandler inventoryOutputBuffer,
             IItemHandler inventoryCraftingOutput,
             InventoryCraftingWrapper inventoryCraftingWrapper)
     {
         this.inventoryCraftingGridBase = inventoryCraftingGridBase;
+        this.inventoryOutputBuffer = inventoryOutputBuffer;
         this.inventoryCraftingOutput = inventoryCraftingOutput;
-        this.inventoryOutput = inventoryOutput;
         this.inventoryCraftingWrapper = inventoryCraftingWrapper;
     }
 
@@ -57,7 +57,7 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
         // The rest of the slots are for the crafting grid.
         if (slot == 0)
         {
-            ItemStack stack = this.inventoryOutput.getStackInSlot(0);
+            ItemStack stack = this.inventoryOutputBuffer.getStackInSlot(0);
 
             // If there are items in the output inventory (after a partial craft operation), show those
             if (stack.isEmpty() == false)
@@ -80,20 +80,20 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
         // Crafting output slot
         if (slot == 0)
         {
-            ItemStack stack = this.inventoryOutput.getStackInSlot(0);
+            ItemStack stack = this.inventoryOutputBuffer.getStackInSlot(0);
 
             if (simulate == false)
             {
                 // If the output buffer inventory slot is empty, then craft and move one set of crafted items into it
                 if (stack.isEmpty())
                 {
-                    // Craft one set of items
-                    stack = this.inventoryCraftingOutput.extractItem(0, stack.getCount(), false);
-                    this.inventoryOutput.insertItem(0, stack, false);
+                    // Craft one set of items (the amount is internally set to the current stack size)
+                    stack = this.inventoryCraftingOutput.extractItem(0, 64, false);
+                    this.inventoryOutputBuffer.insertItem(0, stack, false);
                 }
 
                 // ... and then extract from that output buffer inventory slot
-                return this.inventoryOutput.extractItem(0, amount, false);
+                return this.inventoryOutputBuffer.extractItem(0, amount, false);
             }
             // Simulating...
             else
@@ -101,7 +101,7 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
                 // Items in the output buffer, use those
                 if (stack.isEmpty() == false)
                 {
-                    return this.inventoryOutput.extractItem(0, amount, true);
+                    return this.inventoryOutputBuffer.extractItem(0, amount, true);
                 }
 
                 // No output buffer items, use the crafting recipe output instead
@@ -115,7 +115,7 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
 
             if (simulate == false)
             {
-                this.inventoryCraftingWrapper.markDirty();
+                this.inventoryCraftingWrapper.checkUpdateGridCacheForSlot(slot - 1);
             }
 
             return stack;
@@ -125,31 +125,42 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
     @Override
     public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)
     {
-        // Don't allow anything into the crafting output slots
-        if (slot == 0)
+        if (this.isItemValid(slot, stack) == false)
         {
             return stack;
         }
 
         stack = this.inventoryCraftingGridBase.insertItem(slot - 1, stack, simulate);
 
-        // If actually adding items, update the recipe output
+        // If actually adding items, mark the grid dirty
         if (simulate == false)
         {
-            this.inventoryCraftingWrapper.markDirty();
+            this.inventoryCraftingWrapper.checkUpdateGridCacheForSlot(slot - 1);
         }
 
         return stack;
     }
 
     @Override
-    public NBTTagCompound serializeNBT()
+    public boolean isItemValid(int slot, ItemStack stack)
     {
-        return new NBTTagCompound();
+        // Don't allow anything into the crafting output slot
+        if (slot == 0)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound nbt)
+    public CompoundNBT serializeNBT()
+    {
+        return new CompoundNBT();
+    }
+
+    @Override
+    public void deserializeNBT(CompoundNBT nbt)
     {
     }
 }

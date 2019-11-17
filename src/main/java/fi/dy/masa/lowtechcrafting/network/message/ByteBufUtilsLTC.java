@@ -1,16 +1,16 @@
 package fi.dy.masa.lowtechcrafting.network.message;
 
+import java.io.IOException;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.NBTSizeTracker;
+import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.handler.codec.EncoderException;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTSizeTracker;
-import net.minecraft.nbt.NBTTagCompound;
-import fi.dy.masa.lowtechcrafting.LowTechCrafting;
-import java.io.IOException;
 
 public class ByteBufUtilsLTC
 {
@@ -18,41 +18,33 @@ public class ByteBufUtilsLTC
     {
         if (stack.isEmpty())
         {
-            buf.writeShort(-1);
+            buf.writeInt(-1);
             return;
         }
 
-        buf.writeShort(Item.getIdFromItem(stack.getItem()));
-        buf.writeShort(stack.getMetadata());
+        buf.writeInt(Item.getIdFromItem(stack.getItem()));
         buf.writeInt(stack.getCount());
 
-        NBTTagCompound tag = null;
-
-        if (stack.getItem().isDamageable() || stack.getItem().getShareTag())
-        {
-            tag = stack.getItem().getNBTShareTag(stack);
-        }
-
+        CompoundNBT tag = stack.getItem().getShareTag(stack);
         writeNBTTagCompoundToBuffer(buf, tag);
     }
 
     public static ItemStack readItemStackFromBuffer(ByteBuf buf) throws IOException
     {
         ItemStack stack = ItemStack.EMPTY;
-        short id = buf.readShort();
+        int id = buf.readInt();
 
         if (id >= 0)
         {
-            short meta = buf.readShort();
             int stackSize = buf.readInt();
-            stack = new ItemStack(Item.getItemById(id), stackSize, meta);
-            stack.setTagCompound(readNBTTagCompoundFromBuffer(buf));
+            stack = new ItemStack(Item.getItemById(id), stackSize);
+            stack.setTag(readNBTTagCompoundFromBuffer(buf));
         }
 
         return stack;
     }
 
-    public static void writeNBTTagCompoundToBuffer(ByteBuf buf, NBTTagCompound tag)
+    public static void writeNBTTagCompoundToBuffer(ByteBuf buf, CompoundNBT tag)
     {
         if (tag == null)
         {
@@ -71,7 +63,7 @@ public class ByteBufUtilsLTC
         }
     }
 
-    public static NBTTagCompound readNBTTagCompoundFromBuffer(ByteBuf buf) throws IOException
+    public static CompoundNBT readNBTTagCompoundFromBuffer(ByteBuf buf) throws IOException
     {
         int i = buf.readerIndex();
         byte b0 = buf.readByte();

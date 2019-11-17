@@ -2,15 +2,15 @@ package fi.dy.masa.lowtechcrafting.inventory;
 
 import javax.annotation.Nonnull;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.MathHelper;
+import fi.dy.masa.lowtechcrafting.util.NBTUtils;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import fi.dy.masa.lowtechcrafting.util.NBTUtils;
 
-public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerializable<NBTTagCompound>, IItemHandlerSelective, IItemHandlerSize
+public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerializable<CompoundNBT>, IItemHandlerSelective, IItemHandlerSize
 {
     protected final NonNullList<ItemStack> items;
     private final boolean allowCustomStackSizes;
@@ -92,9 +92,8 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
         {
             // If the slot is already full, or the to-be-inserted item is different
             if (existingStackSize >= max ||
-                    stack.getItem() != existingStack.getItem() ||
-                    stack.getMetadata() != existingStack.getMetadata() ||
-                    ItemStack.areItemStackTagsEqual(stack, existingStack) == false)
+                stack.getItem() != existingStack.getItem() ||
+                ItemStack.areItemStackTagsEqual(stack, existingStack) == false)
             {
                 return stack;
             }
@@ -171,7 +170,7 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
             }
             else
             {
-                stack = existingStack.splitStack(amount);
+                stack = existingStack.split(amount);
 
                 if (existingStack.getCount() <= 0)
                 {
@@ -186,28 +185,28 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
     }
 
     @Override
-    public NBTTagCompound serializeNBT()
+    public CompoundNBT serializeNBT()
     {
-        NBTTagCompound wrapper = new NBTTagCompound();
-        NBTTagCompound nbt = new NBTTagCompound();
+        CompoundNBT wrapper = new CompoundNBT();
+        CompoundNBT nbt = new CompoundNBT();
 
         if (this.inventorySize != this.items.size())
         {
-            nbt.setByte("SlotCount", (byte) this.inventorySize);
+            nbt.putByte("SlotCount", (byte) this.inventorySize);
         }
 
         NBTUtils.writeItemsToTag(nbt, this.items, "Items", true);
-        wrapper.setTag(this.tagName, nbt);
+        wrapper.put(this.tagName, nbt);
 
         return wrapper;
     }
 
     @Override
-    public void deserializeNBT(NBTTagCompound nbt)
+    public void deserializeNBT(CompoundNBT nbt)
     {
-        nbt = nbt.getCompoundTag(this.tagName);
+        nbt = nbt.getCompound(this.tagName);
 
-        if (nbt.hasKey("SlotCount", Constants.NBT.TAG_BYTE))
+        if (nbt.contains("SlotCount", Constants.NBT.TAG_BYTE))
         {
             this.setInventorySize(nbt.getByte("SlotCount"));
         }
@@ -240,6 +239,12 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
 
     @Override
     public boolean canExtractFromSlot(int slot)
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isItemValid(int slot, ItemStack stack)
     {
         return true;
     }

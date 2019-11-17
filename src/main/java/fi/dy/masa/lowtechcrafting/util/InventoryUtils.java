@@ -6,12 +6,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.oredict.OreDictionary;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerBasic;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.SlotRange;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 public class InventoryUtils
 {
@@ -95,33 +94,6 @@ public class InventoryUtils
         }
 
         return stack1.isItemEqual(stack2) && ItemStack.areItemStackTagsEqual(stack1, stack2);
-    }
-
-    /**
-     * Checks if the ItemStack <b>stackTarget</b> is valid to be used as a substitution
-     * for <b>stackReference</b> via the OreDictionary keys.
-     * @param stackTarget
-     * @param stackReference
-     * @return
-     */
-    public static boolean areItemStacksOreDictMatch(@Nonnull ItemStack stackTarget, @Nonnull ItemStack stackReference)
-    {
-        int[] ids = OreDictionary.getOreIDs(stackReference);
-
-        for (int id : ids)
-        {
-            List<ItemStack> oreStacks = OreDictionary.getOres(OreDictionary.getOreName(id), false);
-
-            for (ItemStack oreStack : oreStacks)
-            {
-                if (OreDictionary.itemMatches(stackTarget, oreStack, false))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -706,19 +678,7 @@ public class InventoryUtils
      */
     public static ItemStack collectItemsFromInventory(IItemHandler inv, @Nonnull ItemStack stackTemplate, int maxAmount, boolean reverse)
     {
-        return collectItemsFromInventory(inv, stackTemplate, maxAmount, reverse, false);
-    }
-
-    /**
-     * Collects items from the inventory that are identical to stackTemplate and makes a new ItemStack
-     * out of them, up to stackSize = maxAmount. If <b>reverse</b> is true, then the items are collected
-     * starting from the end of the given inventory.
-     * If no matching items are found, an empty stack is returned.
-     */
-    public static ItemStack collectItemsFromInventory(IItemHandler inv, @Nonnull ItemStack stackTemplate,
-            int maxAmount, boolean reverse, boolean useOreDict)
-    {
-        return collectItemsFromInventoryFromSlotRange(inv, stackTemplate, new SlotRange(inv), maxAmount, reverse, useOreDict);
+        return collectItemsFromInventoryFromSlotRange(inv, stackTemplate, new SlotRange(inv), maxAmount, reverse);
     }
 
     /**
@@ -728,7 +688,7 @@ public class InventoryUtils
      * If no matching items are found, an empty stack is returned.
      */
     public static ItemStack collectItemsFromInventoryFromSlotRange(IItemHandler inv, @Nonnull ItemStack stackTemplate,
-            SlotRange range, int amount, boolean reverse, boolean useOreDict)
+            SlotRange range, int amount, boolean reverse)
     {
         if (range.first >= inv.getSlots())
         {
@@ -755,23 +715,6 @@ public class InventoryUtils
             {
                 stackTmp = extractItemsFromSlot(inv, slot, amount - stack.getCount());
                 //System.out.printf("extracted %s from slot %d\n", stackTmp, slot);
-
-                if (stackTmp.isEmpty() == false)
-                {
-                    stack.grow(stackTmp.getCount());
-                }
-            }
-            else if (useOreDict && areItemStacksOreDictMatch(stackTmp, stackTemplate))
-            {
-                // This is the first match, and since it's an OreDictionary match ie. different actual
-                // item, we convert the stack to the matched item.
-                if (stack.getCount() == 0)
-                {
-                    stack = stackTmp.copy();
-                    stack.setCount(0);
-                }
-
-                stackTmp = extractItemsFromSlot(inv, slot, amount - stack.getCount());
 
                 if (stackTmp.isEmpty() == false)
                 {

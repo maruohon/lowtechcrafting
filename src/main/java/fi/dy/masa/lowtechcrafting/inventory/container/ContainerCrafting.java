@@ -1,24 +1,24 @@
 package fi.dy.masa.lowtechcrafting.inventory.container;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.InventoryCraftResult;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.ClickType;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.crafting.IRecipeContainer;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
+import net.minecraft.network.PacketBuffer;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.ContainerCustomSlotClick;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.MergeSlotRange;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
+import fi.dy.masa.lowtechcrafting.reference.ModObjects;
 import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 
-public class ContainerCrafting extends ContainerCustomSlotClick implements IRecipeContainer
+public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraftingWrapper> implements IRecipeContainer
 {
     protected final TileEntityCrafting te;
     private final InventoryCraftingWrapper invCraftingGrid;
@@ -26,9 +26,14 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     private final IItemHandler invCraftingWrapper;
     private int craftingSlot;
 
-    public ContainerCrafting(EntityPlayer player, TileEntityCrafting te)
+    public ContainerCrafting(int windowId, PlayerInventory playerInv, PacketBuffer extraData)
     {
-        super(player, te.getCraftingWrapperInventory());
+        this(windowId, playerInv.player, ((TileEntityCrafting) playerInv.player.getEntityWorld().getTileEntity(extraData.readBlockPos())));
+    }
+
+    public ContainerCrafting(int windowId, PlayerEntity player, TileEntityCrafting te)
+    {
+        super(windowId, ModObjects.CONTAINER_TYPE_CRAFTING_TABLE, player, te.getCraftingWrapperInventory());
 
         this.te = te;
         this.invCraftingGrid = te.getCraftingGridWrapperInventory();
@@ -39,9 +44,9 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     }
 
     @Override
-    public boolean canInteractWith(EntityPlayer player)
+    public boolean canInteractWith(PlayerEntity player)
     {
-        return this.te.isInvalid() == false;
+        return this.te.isRemoved() == false;
     }
 
     @Override
@@ -60,13 +65,13 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
         this.craftingSlot = this.inventorySlots.size();
 
         // The first slot in the inventory is the crafting output slot
-        this.addSlotToContainer(new SlotItemHandlerCraftResult(this.invCraftingGrid, this.invCraftResult, invOutput, 0, 124, 35, this.player));
+        this.addSlot(new SlotItemHandlerCraftResult(this.invCraftingGrid, this.invCraftResult, invOutput, 0, 124, 35, this.player));
 
         for (int r = 0; r < 3; r++)
         {
             for (int c = 0; c < 3; c++)
             {
-                this.addSlotToContainer(new SlotItemHandlerGeneric(invGrid, r * 3 + c, posX + c * 18, posY + r * 18));
+                this.addSlot(new SlotItemHandlerGeneric(invGrid, r * 3 + c, posX + c * 18, posY + r * 18));
             }
         }
 
@@ -75,7 +80,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     }
 
     @Override
-    protected void shiftClickSlot(int slotNum, EntityPlayer player)
+    protected void shiftClickSlot(int slotNum, PlayerEntity player)
     {
         if (slotNum != this.craftingSlot)
         {
@@ -103,7 +108,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     }
 
     @Override
-    protected void rightClickSlot(int slotNum, EntityPlayer player)
+    protected void rightClickSlot(int slotNum, PlayerEntity player)
     {
         // Crafting output slot: just take the full stack as you would when left clicking
         if (slotNum == this.craftingSlot)
@@ -139,7 +144,16 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
     }
 
     @Override
-    public ItemStack slotClick(int slotNum, int dragType, ClickType clickType, EntityPlayer player)
+    public void detectAndSendChanges()
+    {
+        // Lazy update the output before syncing the slots
+        this.invCraftingGrid.updateCraftingOutput();
+
+        super.detectAndSendChanges();
+    }
+
+    @Override
+    public ItemStack slotClick(int slotNum, int dragType, ClickType clickType, PlayerEntity player)
     {
         super.slotClick(slotNum, dragType, clickType, player);
 
@@ -152,16 +166,55 @@ public class ContainerCrafting extends ContainerCustomSlotClick implements IReci
         return ItemStack.EMPTY;
     }
 
+    /*
     @Override
-    public InventoryCraftResult getCraftResult()
+    public CraftResultInventory getCraftResult()
     {
         // dummy
-        return new InventoryCraftResult();
+        return new CraftResultInventory();
     }
 
     @Override
-    public InventoryCrafting getCraftMatrix()
+    public CraftingInventory getCraftMatrix()
     {
         return this.invCraftingGrid;
     }
+
+    @Override
+    public void func_201771_a(RecipeItemHelper helper)
+    {
+        this.invCraftingGrid.fillStackedContents(helper);
+    }
+
+    @Override
+    public void clear()
+    {
+        this.invCraftingGrid.clear();
+        this.invCraftResult.setStackInSlot(0, ItemStack.EMPTY);
+    }
+
+    @Override
+    public boolean matches(IRecipe<? super InventoryCraftingWrapper> recipeIn)
+    {
+        return recipeIn.matches(this.invCraftingGrid, this.player.getEntityWorld());
+    }
+
+    @Override
+    public int getWidth()
+    {
+        return this.invCraftingGrid.getWidth();
+    }
+
+    @Override
+    public int getHeight()
+    {
+        return this.invCraftingGrid.getHeight();
+    }
+
+    @Override
+    public List<RecipeBookCategories> getRecipeBookCategories()
+    {
+        return ImmutableList.of(RecipeBookCategories.SEARCH, RecipeBookCategories.EQUIPMENT, RecipeBookCategories.BUILDING_BLOCKS, RecipeBookCategories.MISC, RecipeBookCategories.REDSTONE);
+    }
+    */
 }

@@ -1,10 +1,10 @@
 package fi.dy.masa.lowtechcrafting.inventory;
 
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -14,49 +14,71 @@ import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 
 public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 {
-    @Nullable
-    private World world;
-    @Nullable
-    private BlockPos pos = BlockPos.ORIGIN;
-    @Nullable
-    private EntityPlayer player;
-    @Nullable
-    private InventoryCraftingWrapper craftMatrix;
-    @Nullable
-    private IRecipe recipe;
+    @Nullable private World world;
+    @Nullable private BlockPos pos = BlockPos.ZERO;
+    @Nullable private PlayerEntity player;
+    @Nullable private InventoryCraftingWrapper craftMatrix;
+    @Nullable private ICraftingRecipe recipe;
+    private Supplier<PlayerEntity> playerSupplier = () -> null;
 
     public ItemHandlerCraftResult()
     {
         super(1);
     }
 
-    public void init(InventoryCraftingWrapper craftMatrix, World world, EntityPlayer player, BlockPos pos)
+    public void init(InventoryCraftingWrapper craftMatrix, World world, Supplier<PlayerEntity> playerSupplier, BlockPos pos)
     {
         this.craftMatrix = craftMatrix;
         this.world = world;
-        this.player = player;
+        this.playerSupplier = playerSupplier;
         this.pos = pos;
     }
 
-    public void setRecipe(@Nullable IRecipe recipe)
+    public void setRecipe(@Nullable ICraftingRecipe recipe)
     {
         this.recipe = recipe;
     }
 
     @Nullable
-    public IRecipe getRecipe()
+    public ICraftingRecipe getRecipe()
     {
         return this.recipe;
+    }
+
+    @Nullable
+    private PlayerEntity getPlayer()
+    {
+        if (this.player == null)
+        {
+            this.player = this.playerSupplier.get();
+        }
+
+        return this.player;
+    }
+
+    @Override
+    public ItemStack getStackInSlot(int slot)
+    {
+        // Lazy update the result slot
+        this.craftMatrix.updateCraftingOutput();
+
+        return super.getStackInSlot(slot);
     }
 
     @Override
     public ItemStack extractItem(int slot, int amount, boolean simulate)
     {
-        ItemStack stack = super.extractItem(slot, this.getStackInSlot(slot).getCount(), simulate);
+        // Lazy update the result slot
+        this.craftMatrix.updateCraftingOutput();
 
-        if (simulate == false && this.player != null)
+        // Always simulate, to not actually empty out the result slot.
+        // This is because it would not be re-set unless the grid contents change,
+        // ie. crafting from multiple input items at once would break.
+        ItemStack stack = super.extractItem(slot, this.getStackInSlot(slot).getCount(), true);
+
+        if (simulate == false)
         {
-            this.onCraft(this.player, stack);
+            this.onCraft(stack);
         }
 
         return stack;
@@ -64,29 +86,25 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 
     private void onCraft(ItemStack stack)
     {
-        stack.onCrafting(this.world, this.player, stack.getCount());
-        net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
+        PlayerEntity player = this.getPlayer();
 
-        IRecipe recipe = this.getRecipe();
-
-        if (recipe != null && recipe.isDynamic() == false)
+        if (player == null)
         {
-            // This will crash when the RecipeBook tries to send a packet to the FakePlayer
-            //this.player.unlockRecipes(Lists.newArrayList(recipe));
-            this.setRecipe(null);
+            return;
         }
-    }
 
-    private void onCraft(EntityPlayer player, ItemStack stack)
-    {
-        this.onCraft(stack);
-
+        stack.onCrafting(this.world, player, stack.getCount());
+        net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
         net.minecraftforge.common.ForgeHooks.setCraftingPlayer(player);
-        NonNullList<ItemStack> remainingItems = CraftingManager.getRemainingItems(this.craftMatrix, player.getEntityWorld());
+
+        //NonNullList<ItemStack> remainingItems = world.getRecipeManager().getRecipeNonNull(IRecipeType.CRAFTING, this.craftMatrix, this.world);
+        NonNullList<ItemStack> remainingItems = this.getRemainingItems();
+
         net.minecraftforge.common.ForgeHooks.setCraftingPlayer(null);
 
         // Prevent unnecessary updates via the markDirty() method, while updating the grid contents
         this.craftMatrix.setInhibitResultUpdate(true);
+        this.craftMatrix.onCraft();
 
         for (int slot = 0; slot < remainingItems.size(); slot++)
         {
@@ -117,8 +135,42 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
             }
         }
 
+        /*
+        IRecipe<?> recipe = this.getRecipe();
+
+        if (recipe != null && recipe.isDynamic() == false)
+        {
+            // This will crash when the RecipeBook tries to send a packet to the FakePlayer
+            //this.player.unlockRecipes(Lists.newArrayList(recipe));
+            this.setRecipe(null);
+        }
+        */
+
         // Re-enable updates, and force update the output
         this.craftMatrix.setInhibitResultUpdate(false);
-        this.craftMatrix.markDirty();
+    }
+
+    /**
+     * This is the same as <b>NonNullList<ItemStack> remainingItems = world.getRecipeManager().getRecipeNonNull(IRecipeType.CRAFTING, this.craftMatrix, world);</b>
+     * except that the recipe won't be queried again for nothing...
+     * @return
+     */
+    private NonNullList<ItemStack> getRemainingItems()
+    {
+        if (this.recipe != null)
+        {
+            return this.recipe.getRemainingItems(this.craftMatrix);
+        }
+        else
+        {
+            NonNullList<ItemStack> items = NonNullList.withSize(this.craftMatrix.getSizeInventory(), ItemStack.EMPTY);
+
+            for (int i = 0; i < items.size(); ++i)
+            {
+                items.set(i, this.craftMatrix.getStackInSlot(i));
+            }
+
+            return items;
+        }
     }
 }
