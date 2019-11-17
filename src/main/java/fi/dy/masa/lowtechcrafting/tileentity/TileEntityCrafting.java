@@ -119,8 +119,8 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
 
     public void readFromNBTCustom(CompoundNBT nbt)
     {
-        this.itemHandlerCraftingGrid.deserializeNBT(nbt);
         this.itemHandlerOutputBuffer.deserializeNBT(nbt);
+        this.inventoryCrafting.deserializeNBT(nbt);
 
         if (nbt.contains("CustomName", Constants.NBT.TAG_STRING))
         {
@@ -140,8 +140,8 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     {
         nbt = super.write(nbt);
 
-        nbt.merge(this.itemHandlerCraftingGrid.serializeNBT());
         nbt.merge(this.itemHandlerOutputBuffer.serializeNBT());
+        nbt.merge(this.inventoryCrafting.serializeNBT());
 
         if (this.hasCustomName())
         {

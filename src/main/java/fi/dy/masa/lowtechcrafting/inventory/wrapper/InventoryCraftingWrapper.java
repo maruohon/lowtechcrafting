@@ -8,26 +8,28 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.item.crafting.RecipeItemHelper;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
+import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerTileEntity;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
-import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.common.util.INBTSerializable;
 
-public class InventoryCraftingWrapper extends CraftingInventory
+public class InventoryCraftingWrapper extends CraftingInventory implements INBTSerializable<CompoundNBT>
 {
     private final int inventoryWidth;
     private final int inventoryHeight;
     private final ItemHandlerCraftResult craftResult;
     private final NonNullList<ItemStack> gridCache;
-    private IItemHandlerModifiable craftMatrix;
+    private ItemStackHandlerTileEntity craftMatrix;
     private Optional<ICraftingRecipe> lastCraftedRecipe = Optional.empty();
     @Nullable private ICraftingRecipe recipe;
     @Nullable private World world;
     private boolean inhibitResultUpdate;
     private boolean gridDirty;
 
-    public InventoryCraftingWrapper(int width, int height, IItemHandlerModifiable craftMatrix, ItemHandlerCraftResult resultInventory)
+    public InventoryCraftingWrapper(int width, int height, ItemStackHandlerTileEntity craftMatrix, ItemHandlerCraftResult resultInventory)
     {
         super(null, 0, 0); // dummy
 
@@ -36,17 +38,13 @@ public class InventoryCraftingWrapper extends CraftingInventory
         this.craftMatrix = craftMatrix;
         this.craftResult = resultInventory;
         this.gridCache = NonNullList.withSize(width * height, ItemStack.EMPTY);
+
+        this.updateGridCache();
     }
 
     public void setWorld(World world)
     {
         this.world = world;
-    }
-
-    public void setCraftMatrix(IItemHandlerModifiable craftMatrix)
-    {
-        this.craftMatrix = craftMatrix;
-        this.updateGridCache();
     }
 
     public void setInhibitResultUpdate(boolean inhibitUpdate)
@@ -94,7 +92,7 @@ public class InventoryCraftingWrapper extends CraftingInventory
         return true;
     }
 
-    private void updateGridCache()
+    public void updateGridCache()
     {
         for (int slot = 0; slot < this.craftMatrix.getSlots(); ++slot)
         {
@@ -254,5 +252,18 @@ public class InventoryCraftingWrapper extends CraftingInventory
     public int getFieldCount()
     {
         return 0;
+    }
+
+    @Override
+    public CompoundNBT serializeNBT()
+    {
+        return this.craftMatrix.serializeNBT();
+    }
+
+    @Override
+    public void deserializeNBT(CompoundNBT nbt)
+    {
+        this.craftMatrix.deserializeNBT(nbt);
+        this.updateGridCache();
     }
 }
