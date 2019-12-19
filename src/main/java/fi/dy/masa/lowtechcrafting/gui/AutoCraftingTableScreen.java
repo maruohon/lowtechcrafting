@@ -1,6 +1,6 @@
 package fi.dy.masa.lowtechcrafting.gui;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
@@ -30,7 +30,7 @@ public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>/
     @Override
     protected void drawGuiContainerBackgroundLayer(float gameTicks, int mouseX, int mouseY)
     {
-        GlStateManager.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
         this.minecraft.getTextureManager().bindTexture(this.guiTexture);
         this.blit(this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
     }
