@@ -14,24 +14,27 @@ import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 
 public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 {
+    private final Supplier<World> worldSupplier;
+    private final Supplier<PlayerEntity> playerSupplier;
+    private final Supplier<BlockPos> posSupplier;
     @Nullable private World world;
-    @Nullable private BlockPos pos = BlockPos.ZERO;
     @Nullable private PlayerEntity player;
+    @Nullable private BlockPos pos;
     @Nullable private InventoryCraftingWrapper craftMatrix;
     @Nullable private ICraftingRecipe recipe;
-    private Supplier<PlayerEntity> playerSupplier = () -> null;
 
-    public ItemHandlerCraftResult()
+    public ItemHandlerCraftResult(Supplier<World> worldSupplier, Supplier<PlayerEntity> playerSupplier, Supplier<BlockPos> posSupplier)
     {
         super(1);
+
+        this.worldSupplier = worldSupplier;
+        this.playerSupplier = playerSupplier;
+        this.posSupplier = posSupplier;
     }
 
-    public void init(InventoryCraftingWrapper craftMatrix, World world, Supplier<PlayerEntity> playerSupplier, BlockPos pos)
+    public void setCraftMatrix(InventoryCraftingWrapper craftMatrix)
     {
         this.craftMatrix = craftMatrix;
-        this.world = world;
-        this.playerSupplier = playerSupplier;
-        this.pos = pos;
     }
 
     public void setRecipe(@Nullable ICraftingRecipe recipe)
@@ -46,6 +49,17 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
     }
 
     @Nullable
+    private World getWorld()
+    {
+        if (this.world == null)
+        {
+            this.world = this.worldSupplier.get();
+        }
+
+        return this.world;
+    }
+
+    @Nullable
     private PlayerEntity getPlayer()
     {
         if (this.player == null)
@@ -54,6 +68,17 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
         }
 
         return this.player;
+    }
+
+    @Nullable
+    private BlockPos getPos()
+    {
+        if (this.pos == null)
+        {
+            this.pos = this.posSupplier.get();
+        }
+
+        return this.pos;
     }
 
     @Override
@@ -87,13 +112,15 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
     private void onCraft(ItemStack stack)
     {
         PlayerEntity player = this.getPlayer();
+        World world = this.getWorld();
+        BlockPos pos = this.getPos();
 
-        if (player == null)
+        if (player == null || world == null || pos == null)
         {
             return;
         }
 
-        stack.onCrafting(this.world, player, stack.getCount());
+        stack.onCrafting(world, player, stack.getCount());
         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
         net.minecraftforge.common.ForgeHooks.setCraftingPlayer(player);
 
@@ -130,7 +157,7 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
                 }
                 else
                 {
-                    EntityUtils.dropItemStacksInWorld(this.world, this.pos, remainingItemsInSlot, -1, true);
+                    EntityUtils.dropItemStacksInWorld(world, pos, remainingItemsInSlot, -1, true);
                 }
             }
         }

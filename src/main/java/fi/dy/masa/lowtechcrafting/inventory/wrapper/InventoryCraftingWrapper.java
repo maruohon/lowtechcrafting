@@ -1,6 +1,7 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.CraftingInventory;
@@ -22,14 +23,16 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     private final int inventoryHeight;
     private final ItemHandlerCraftResult craftResult;
     private final NonNullList<ItemStack> gridCache;
-    private ItemStackHandlerTileEntity craftMatrix;
+    private final ItemStackHandlerTileEntity craftMatrix;
+    private final Supplier<World> worldSupplier;
     private Optional<ICraftingRecipe> lastCraftedRecipe = Optional.empty();
     @Nullable private ICraftingRecipe recipe;
     @Nullable private World world;
     private boolean inhibitResultUpdate;
     private boolean gridDirty;
 
-    public InventoryCraftingWrapper(int width, int height, ItemStackHandlerTileEntity craftMatrix, ItemHandlerCraftResult resultInventory)
+    public InventoryCraftingWrapper(int width, int height, ItemStackHandlerTileEntity craftMatrix,
+            ItemHandlerCraftResult resultInventory, Supplier<World> worldSupplier)
     {
         super(null, 0, 0); // dummy
 
@@ -38,13 +41,20 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
         this.craftMatrix = craftMatrix;
         this.craftResult = resultInventory;
         this.gridCache = NonNullList.withSize(width * height, ItemStack.EMPTY);
+        this.worldSupplier = worldSupplier;
 
         this.updateGridCache();
     }
 
-    public void setWorld(World world)
+    @Nullable
+    private World getWorld()
     {
-        this.world = world;
+        if (this.world == null)
+        {
+            this.world = this.worldSupplier.get();
+        }
+
+        return this.world;
     }
 
     public void setInhibitResultUpdate(boolean inhibitUpdate)
@@ -188,13 +198,15 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
 
     public void updateCraftingOutput()
     {
-        if (this.gridDirty && this.inhibitResultUpdate == false && this.world != null && this.world.isRemote == false)
+        World world = this.getWorld();
+
+        if (this.gridDirty && this.inhibitResultUpdate == false && world != null && world.isRemote == false)
         {
             Optional<ICraftingRecipe> optional = this.lastCraftedRecipe;
 
-            if (optional.isPresent() == false || optional.get().matches(this, this.world) == false)
+            if (optional.isPresent() == false || optional.get().matches(this, world) == false)
             {
-                optional = this.world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, this, this.world);
+                optional = world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, this, world);
             }
 
             ItemStack stack = ItemStack.EMPTY;

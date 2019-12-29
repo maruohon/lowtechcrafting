@@ -15,7 +15,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerTileEntity;
@@ -36,15 +35,15 @@ import net.minecraftforge.items.IItemHandler;
 
 public class TileEntityCrafting extends TileEntity implements INamedContainerProvider
 {
-    private ItemStackHandlerTileEntity itemHandlerCraftingGrid;
-    private ItemStackHandlerTileEntity itemHandlerOutputBuffer;
-    private InventoryCraftingWrapper inventoryCrafting;
-    private ItemHandlerCraftResult itemHandlerCraftResult;
-    private ItemHandlerWrapperCrafter itemHandlerWrapperCrafter;
-    private IItemHandler itemHandlerExternal;
+    private final ItemStackHandlerTileEntity itemHandlerCraftingGrid;
+    private final ItemStackHandlerTileEntity itemHandlerOutputBuffer;
+    private final InventoryCraftingWrapper inventoryCrafting;
+    private final ItemHandlerCraftResult itemHandlerCraftResult;
+    private final ItemHandlerWrapperCrafter itemHandlerWrapperCrafter;
+    private final IItemHandler itemHandlerExternal;
+    private final String tileEntityName;
     private String customInventoryName;
     private FakePlayer fakePlayer;
-    private final String tileEntityName;
 
     public TileEntityCrafting()
     {
@@ -53,8 +52,9 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
         this.tileEntityName = Names.CRAFTING_TABLE;
         this.itemHandlerCraftingGrid    = new ItemStackHandlerTileEntity(0, 9, 64, false, "Items", this);
         this.itemHandlerOutputBuffer    = new ItemStackHandlerTileEntity(1, 1, 64, false, "ItemsOut", this);
-        this.itemHandlerCraftResult     = new ItemHandlerCraftResult();
-        this.inventoryCrafting          = new InventoryCraftingWrapper(3, 3, this.itemHandlerCraftingGrid, this.itemHandlerCraftResult);
+        this.itemHandlerCraftResult     = new ItemHandlerCraftResult(this::getWorld, this::getPlayer, this::getPos);
+        this.inventoryCrafting          = new InventoryCraftingWrapper(3, 3, this.itemHandlerCraftingGrid, this.itemHandlerCraftResult, this::getWorld);
+        this.itemHandlerCraftResult.setCraftMatrix(this.inventoryCrafting);
 
         this.itemHandlerWrapperCrafter = new ItemHandlerWrapperCrafter(
                 this.itemHandlerCraftingGrid,
@@ -78,18 +78,6 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     public IItemHandler getCraftingWrapperInventory()
     {
         return this.itemHandlerWrapperCrafter;
-    }
-
-    @Override
-    public void onLoad()
-    {
-        World world = this.getWorld();
-
-        if (world.isRemote == false)
-        {
-            this.inventoryCrafting.setWorld(world);
-            this.itemHandlerCraftResult.init(this.inventoryCrafting, world, this::getPlayer, this.getPos());
-        }
     }
 
     public void dropInventories()
