@@ -17,7 +17,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
@@ -145,28 +144,29 @@ public class BlockCraftingTable extends Block
 
     public static int calcRedstoneFromInventory(@Nullable IItemHandler inv)
     {
-        if (inv == null)
-        {
-            return 0;
-        }
-        else
+        if (inv != null)
         {
             final int numSlots = inv.getSlots();
-            int nonEmptyStacks = 0;
 
-            for (int slot = 0; slot < numSlots; ++slot)
+            if (numSlots > 0)
             {
-                ItemStack stack = inv.getStackInSlot(slot);
+                int nonEmptyStacks = 0;
 
-                if (stack.isEmpty() == false)
+                // Ignore the output slot, start from slot 1
+                for (int slot = 1; slot < numSlots; ++slot)
                 {
-                    ++nonEmptyStacks;
+                    ItemStack stack = inv.getStackInSlot(slot);
+
+                    if (stack.isEmpty() == false)
+                    {
+                        ++nonEmptyStacks;
+                    }
                 }
+
+                return (nonEmptyStacks * 15) / 9;
             }
-
-            float slotsWithItemsFraction = (float) nonEmptyStacks / (float) numSlots;
-
-            return MathHelper.floor(slotsWithItemsFraction * 14.0F) + (nonEmptyStacks > 0 ? 1 : 0);
         }
+
+        return 0;
     }
 }
