@@ -133,7 +133,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             @Override
             public Pair<ResourceLocation, ResourceLocation> func_225517_c_()
             {
-                return Pair.of(PlayerContainer.field_226615_c_, PlayerContainer.field_226620_h_);
+                return Pair.of(PlayerContainer.LOCATION_BLOCKS_TEXTURE, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
             }
         });
     }

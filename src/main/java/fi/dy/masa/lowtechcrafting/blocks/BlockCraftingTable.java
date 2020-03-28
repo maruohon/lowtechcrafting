@@ -102,7 +102,7 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public ActionResultType func_225533_a_(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) // onBlockActivated
+    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) // onBlockActivated
     {
         TileEntity te = world.getTileEntity(pos);
 
