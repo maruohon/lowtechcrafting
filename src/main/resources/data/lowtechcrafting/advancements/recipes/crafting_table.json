@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [ "lowtechcrafting:crafting_table" ]
+  },
+  "criteria": {
+    "has_hopper_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "item": "minecraft:hopper" }
+        ]
+      }
+    },
+    "has_hopper_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "minecraft:hopper"
+      }
+    },
+    "has_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "lowtechcrafting:crafting_table"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_hopper_item",
+      "has_hopper_recipe",
+      "has_recipe"
+    ]
+  ]
+}
