@@ -4,6 +4,7 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -16,6 +17,13 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerTileEntity;
 import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;
@@ -25,13 +33,6 @@ import fi.dy.masa.lowtechcrafting.reference.ModObjects;
 import fi.dy.masa.lowtechcrafting.reference.Names;
 import fi.dy.masa.lowtechcrafting.reference.Reference;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
 
 public class TileEntityCrafting extends TileEntity implements INamedContainerProvider
 {
@@ -41,6 +42,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     private final ItemHandlerCraftResult itemHandlerCraftResult;
     private final ItemHandlerWrapperCrafter itemHandlerWrapperCrafter;
     private final IItemHandler itemHandlerExternal;
+    private final LazyOptional<IItemHandler> inventoryCapability;
     private final String tileEntityName;
     private String customInventoryName;
     private FakePlayer fakePlayer;
@@ -63,6 +65,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
                 this.inventoryCrafting);
 
         this.itemHandlerExternal = new ItemHandlerWrapperCrafterExternal(this.itemHandlerWrapperCrafter);
+        this.inventoryCapability = LazyOptional.of(() -> this.itemHandlerExternal);
     }
 
     public InventoryCraftingWrapper getCraftingGridWrapperInventory()
@@ -96,7 +99,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     {
         if (this.fakePlayer == null && this.getWorld() instanceof ServerWorld)
         {
-            int dim = this.getWorld().getDimension().hashCode();
+            int dim = this.getWorld().func_230315_m_().hashCode();
 
             this.fakePlayer = FakePlayerFactory.get((ServerWorld) this.getWorld(),
                     new GameProfile(new UUID(dim, dim), Reference.MOD_ID + ":" + this.tileEntityName));
@@ -117,10 +120,10 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     }
 
     @Override
-    public void read(CompoundNBT nbt)
+    public void func_230337_a_(BlockState state, CompoundNBT tag)
     {
-        super.read(nbt);
-        this.readFromNBTCustom(nbt); // This call needs to be at the super-most custom TE class
+        super.func_230337_a_(state, tag);
+        this.readFromNBTCustom(tag); // This call needs to be at the super-most custom TE class
     }
 
     @Override
@@ -170,7 +173,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     {
         if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
         {
-            return LazyOptional.of(() -> this.itemHandlerExternal).cast();
+            return this.inventoryCapability.cast();
         }
 
         return super.getCapability(capability, side);

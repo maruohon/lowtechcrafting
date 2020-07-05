@@ -3,7 +3,7 @@ package fi.dy.masa.lowtechcrafting.util;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
 public class EntityUtils
@@ -19,10 +19,10 @@ public class EntityUtils
         double y = worldIn.rand.nextFloat() * -0.5d + 0.75d + pos.getY();
         double z = worldIn.rand.nextFloat() * -0.5d + 0.75d + pos.getZ();
 
-        dropItemStacksInWorld(worldIn, new Vec3d(x, y, z), stack, amountOverride, dropFullStacks, randomMotion);
+        dropItemStacksInWorld(worldIn, new Vector3d(x, y, z), stack, amountOverride, dropFullStacks, randomMotion);
     }
 
-    public static void dropItemStacksInWorld(World worldIn, Vec3d pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
+    public static void dropItemStacksInWorld(World worldIn, Vector3d pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
     {
         int amount = stack.getCount();
         int max = stack.getMaxStackSize();
@@ -49,18 +49,18 @@ public class EntityUtils
             ItemEntity item = new ItemEntity(worldIn, pos.x, pos.y, pos.z, dropStack);
             item.setDefaultPickupDelay();
 
-            Vec3d motion;
+            Vector3d motion;
 
             if (randomMotion)
             {
                 double motionScale = 0.04d;
-                motion = new Vec3d( worldIn.rand.nextGaussian() * motionScale,
+                motion = new Vector3d( worldIn.rand.nextGaussian() * motionScale,
                                     worldIn.rand.nextGaussian() * motionScale + 0.3,
                                     worldIn.rand.nextGaussian() * motionScale);
             }
             else
             {
-                motion = new Vec3d(0, 0, 0);
+                motion = new Vector3d(0, 0, 0);
             }
 
             item.setMotion(motion);
