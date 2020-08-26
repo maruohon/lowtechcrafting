@@ -24,26 +24,26 @@ public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>/
     }
 
     @Override
-    protected void func_230450_a_(MatrixStack matrixStack, float gameTicks, int mouseX, int mouseY) // drawGuiContainerBackgroundLayer
+    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float gameTicks, int mouseX, int mouseY)
     {
         RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        this.field_230706_i_.getTextureManager().bindTexture(this.guiTexture);
-        this.func_238474_b_(matrixStack, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize); // blit
+        this.minecraft.getTextureManager().bindTexture(this.guiTexture);
+        this.blit(matrixStack, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
     }
 
     @Override
-    protected void func_230451_b_(MatrixStack matrixStack, int mouseX, int mouseY) // drawGuiContainerForegroundLayer
+    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY)
     {
-        String s = this.field_230704_d_.getString(); // title.getFormattedText()
-        this.field_230712_o_.func_238421_b_(matrixStack, s, this.xSize / 2.0F - this.field_230712_o_.getStringWidth(s) / 2.0F, 5, 0x404040); // drawString
-        this.field_230712_o_.func_238421_b_(matrixStack, this.playerInventory.getDisplayName().getString(), 8, 73, 0x404040);
+        String s = this.title.getString();
+        this.font.drawString(matrixStack, s, this.xSize / 2.0F - this.font.getStringWidth(s) / 2.0F, 5, 0x404040);
+        this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), 8, 73, 0x404040);
     }
 
     @Override
-    public void func_230430_a_(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) // render
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
-        this.func_230446_a_(matrixStack); // renderBackground
-        super.func_230430_a_(matrixStack, mouseX, mouseY, partialTicks); // render
-        this.func_230459_a_(matrixStack, mouseX, mouseY); // renderHoveredToolTip
+        this.renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
     }
 }

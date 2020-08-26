@@ -92,7 +92,6 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     /**
      * Gets a FakePlayer, which are unique per dimension and per TileEntity type.
      * ONLY call this on the server side!!!
-     * @return
      */
     @Nonnull
     protected FakePlayer getPlayer()
@@ -120,9 +119,9 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     }
 
     @Override
-    public void func_230337_a_(BlockState state, CompoundNBT tag)
+    public void read(BlockState state, CompoundNBT tag)
     {
-        super.func_230337_a_(state, tag);
+        super.read(state, tag);
         this.readFromNBTCustom(tag); // This call needs to be at the super-most custom TE class
     }
 

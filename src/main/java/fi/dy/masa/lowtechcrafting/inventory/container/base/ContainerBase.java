@@ -14,15 +14,15 @@ import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.SlotItemHandler;
 import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.PlayerInvWrapperNoSync;
 import fi.dy.masa.lowtechcrafting.network.PacketHandler;
 import fi.dy.masa.lowtechcrafting.network.message.MessageSyncSlot;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerBase extends Container //<C extends net.minecraft.inventory.IInventory> extends RecipeBookContainer<C>
 {
@@ -131,7 +131,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         this.addSlot(new SlotItemHandlerGeneric(this.playerInv, 40, posX, posY)
         {
             @Override
-            public Pair<ResourceLocation, ResourceLocation> func_225517_c_()
+            public Pair<ResourceLocation, ResourceLocation> getBackground()
             {
                 return Pair.of(PlayerContainer.LOCATION_BLOCKS_TEXTURE, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
             }
