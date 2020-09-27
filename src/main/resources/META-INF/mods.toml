@@ -7,15 +7,15 @@
 # The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
 modLoader="javafml" #mandatory
 
-# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
-# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
-license="GNU Lesser General Public License" #mandatory
-
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
 loaderVersion="[34,)" #mandatory
 
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL="https://github.com/maruohon/lowtechcrafting/issues" #optional
+
+# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
+# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
+license="LGPL-3.0"
 
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
@@ -54,7 +54,7 @@ issueTrackerURL="https://github.com/maruohon/lowtechcrafting/issues" #optional
     # Does this dependency have to exist - if not, ordering below must be specified
     mandatory=true #mandatory
     # The version range of the dependency
-    versionRange="[32,)" #mandatory
+    versionRange="[34.1.0,)" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
@@ -64,6 +64,6 @@ issueTrackerURL="https://github.com/maruohon/lowtechcrafting/issues" #optional
 [[dependencies.lowtechcrafting]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16,1.17)"
+    versionRange="[1.16.3]"
     ordering="NONE"
     side="BOTH"

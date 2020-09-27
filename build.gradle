@@ -12,7 +12,13 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'java'
-apply plugin: 'maven-publish'
+
+repositories {
+    // gigaherz mappings
+    maven {
+        url 'https://www.dogforce-games.com/maven/'
+    }
+}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -26,7 +32,9 @@ configFile.withReader {
 }
 
 minecraft {
-    mappings channel: 'snapshot', version: config.mappings_version
+    //mappings channel: 'snapshot', version: '20191019-1.14.3'
+    mappings channel: "${config.mcp_mappings_channel}", version: "${config.mcp_mappings_version}"
+    //mappings = config.mappings_version
 
     //makeObfSourceJar = false
 
