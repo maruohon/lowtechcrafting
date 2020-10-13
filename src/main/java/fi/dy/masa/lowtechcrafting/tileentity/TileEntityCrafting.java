@@ -98,7 +98,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     {
         if (this.fakePlayer == null && this.getWorld() instanceof ServerWorld)
         {
-            int dim = this.getWorld().func_230315_m_().hashCode();
+            int dim = this.getWorld().getDimensionKey().getLocation().toString().hashCode();
 
             this.fakePlayer = FakePlayerFactory.get((ServerWorld) this.getWorld(),
                     new GameProfile(new UUID(dim, dim), Reference.MOD_ID + ":" + this.tileEntityName));
