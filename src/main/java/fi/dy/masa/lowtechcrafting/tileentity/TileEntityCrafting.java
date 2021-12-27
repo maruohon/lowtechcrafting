@@ -54,8 +54,8 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
         this.tileEntityName = Names.CRAFTING_TABLE;
         this.itemHandlerCraftingGrid    = new ItemStackHandlerTileEntity(0, 9, 64, false, "Items", this);
         this.itemHandlerOutputBuffer    = new ItemStackHandlerTileEntity(1, 1, 64, false, "ItemsOut", this);
-        this.itemHandlerCraftResult     = new ItemHandlerCraftResult(this::getWorld, this::getPlayer, this::getPos);
-        this.inventoryCrafting          = new InventoryCraftingWrapper(3, 3, this.itemHandlerCraftingGrid, this.itemHandlerCraftResult, this::getWorld);
+        this.itemHandlerCraftResult     = new ItemHandlerCraftResult(this::getLevel, this::getPlayer, this::getBlockPos);
+        this.inventoryCrafting          = new InventoryCraftingWrapper(3, 3, this.itemHandlerCraftingGrid, this.itemHandlerCraftResult, this::getLevel);
         this.itemHandlerCraftResult.setCraftMatrix(this.inventoryCrafting);
 
         this.itemHandlerWrapperCrafter = new ItemHandlerWrapperCrafter(
@@ -85,8 +85,8 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
 
     public void dropInventories()
     {
-        InventoryUtils.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerCraftingGrid);
-        InventoryUtils.dropInventoryContentsInWorld(this.getWorld(), this.getPos(), this.itemHandlerOutputBuffer);
+        InventoryUtils.dropInventoryContentsInWorld(this.getLevel(), this.getBlockPos(), this.itemHandlerCraftingGrid);
+        InventoryUtils.dropInventoryContentsInWorld(this.getLevel(), this.getBlockPos(), this.itemHandlerOutputBuffer);
     }
 
     /**
@@ -96,11 +96,11 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     @Nonnull
     protected FakePlayer getPlayer()
     {
-        if (this.fakePlayer == null && this.getWorld() instanceof ServerWorld)
+        if (this.fakePlayer == null && this.getLevel() instanceof ServerWorld)
         {
-            int dim = this.getWorld().getDimensionKey().getLocation().toString().hashCode();
+            int dim = this.getLevel().dimension().location().toString().hashCode();
 
-            this.fakePlayer = FakePlayerFactory.get((ServerWorld) this.getWorld(),
+            this.fakePlayer = FakePlayerFactory.get((ServerWorld) this.getLevel(),
                     new GameProfile(new UUID(dim, dim), Reference.MOD_ID + ":" + this.tileEntityName));
         }
 
@@ -119,16 +119,16 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     }
 
     @Override
-    public void read(BlockState state, CompoundNBT tag)
+    public void load(BlockState state, CompoundNBT tag)
     {
-        super.read(state, tag);
+        super.load(state, tag);
         this.readFromNBTCustom(tag); // This call needs to be at the super-most custom TE class
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt)
+    public CompoundNBT save(CompoundNBT nbt)
     {
-        nbt = super.write(nbt);
+        nbt = super.save(nbt);
 
         nbt.merge(this.itemHandlerOutputBuffer.serializeNBT());
         nbt.merge(this.inventoryCrafting.serializeNBT());
@@ -147,9 +147,9 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
         // The tag from this method is used for the initial chunk packet,
         // and it needs to have the TE position!
         CompoundNBT nbt = new CompoundNBT();
-        nbt.putInt("x", this.getPos().getX());
-        nbt.putInt("y", this.getPos().getY());
-        nbt.putInt("z", this.getPos().getZ());
+        nbt.putInt("x", this.getBlockPos().getX());
+        nbt.putInt("y", this.getBlockPos().getY());
+        nbt.putInt("z", this.getBlockPos().getZ());
 
         // Add the per-block data to the tag
         return nbt;
@@ -159,9 +159,9 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     @Nullable
     public SUpdateTileEntityPacket getUpdatePacket()
     {
-        if (this.getWorld() != null)
+        if (this.getLevel() != null)
         {
-            return new SUpdateTileEntityPacket(this.getPos(), 0, this.getUpdateTag());
+            return new SUpdateTileEntityPacket(this.getBlockPos(), 0, this.getUpdateTag());
         }
 
         return null;

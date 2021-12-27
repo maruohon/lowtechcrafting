@@ -33,7 +33,7 @@ public class ItemStackHandlerTileEntity extends ItemStackHandlerBasic
         super.onContentsChanged(slot);
 
         this.te.inventoryChanged(this.inventoryId, slot);
-        this.te.markDirty();
+        this.te.setChanged();
     }
 
     public int getInventoryId()

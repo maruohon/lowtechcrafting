@@ -63,14 +63,14 @@ public class LowTechCrafting
         {
             String name = Reference.MOD_ID + ":" + Names.CRAFTING_TABLE;
             Block block = ModObjects.BLOCK_CRAFTING_TABLE;
-            event.getRegistry().register((new BlockItem(block, (new Item.Properties()).group(ItemGroup.REDSTONE))).setRegistryName(name));
+            event.getRegistry().register((new BlockItem(block, (new Item.Properties()).tab(ItemGroup.TAB_REDSTONE))).setRegistryName(name));
         }
 
         @SubscribeEvent
         public static void onRegisterBlockEntityTypes(RegistryEvent.Register<TileEntityType<?>> event)
         {
             String name = Reference.MOD_ID + ":" + Names.CRAFTING_TABLE;
-            event.getRegistry().register(TileEntityType.Builder.create(TileEntityCrafting::new, Blocks.CRAFTING_TABLE).build(null).setRegistryName(name));
+            event.getRegistry().register(TileEntityType.Builder.of(TileEntityCrafting::new, Blocks.CRAFTING_TABLE).build(null).setRegistryName(name));
         }
 
         public static <T extends Container> ContainerType<T> createContainerType(IContainerFactory<T> factory)

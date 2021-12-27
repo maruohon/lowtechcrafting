@@ -28,7 +28,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
 
     public ContainerCrafting(int windowId, PlayerInventory playerInv, PacketBuffer extraData)
     {
-        this(windowId, playerInv.player, ((TileEntityCrafting) playerInv.player.getEntityWorld().getTileEntity(extraData.readBlockPos())));
+        this(windowId, playerInv.player, ((TileEntityCrafting) playerInv.player.getCommandSenderWorld().getBlockEntity(extraData.readBlockPos())));
     }
 
     public ContainerCrafting(int windowId, PlayerEntity player, TileEntityCrafting te)
@@ -44,7 +44,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity player)
+    public boolean stillValid(PlayerEntity player)
     {
         return this.te.isRemoved() == false;
     }
@@ -52,7 +52,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     @Override
     protected void addCustomInventorySlots()
     {
-        this.customInventorySlots = new MergeSlotRange(this.inventorySlots.size(), 10);
+        this.customInventorySlots = new MergeSlotRange(this.slots.size(), 10);
 
         int posX = 30;
         int posY = 17;
@@ -62,7 +62,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
 
         // The output slot must be slot number 0, and the crafting grid slots must follow,
         // for the vanilla RecipeBook Ghost Recipes to be rendered at the correct locations
-        this.craftingSlot = this.inventorySlots.size();
+        this.craftingSlot = this.slots.size();
 
         // The first slot in the inventory is the crafting output slot
         this.addSlot(new SlotItemHandlerCraftResult(this.invCraftingGrid, this.invCraftResult, invOutput, 0, 124, 35, this.player));
@@ -76,7 +76,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
         }
 
         // Update the output
-        this.invCraftingGrid.markDirty();
+        this.invCraftingGrid.setChanged();
     }
 
     @Override
@@ -90,16 +90,16 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
 
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
-        if (slot != null && slot.getHasStack())
+        if (slot != null && slot.hasItem())
         {
-            ItemStack stackOrig = slot.getStack().copy();
+            ItemStack stackOrig = slot.getItem().copy();
             int num = 64;
 
             while (num-- > 0)
             {
                 // Could not transfer the items, or ran out of some of the items, so the crafting result changed, bail out now
                 if (this.transferStackFromSlot(player, slotNum) == false ||
-                    InventoryUtils.areItemStacksEqual(stackOrig, slot.getStack()) == false)
+                    InventoryUtils.areItemStacksEqual(stackOrig, slot.getItem()) == false)
                 {
                     break;
                 }
@@ -144,18 +144,18 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     }
 
     @Override
-    public void detectAndSendChanges()
+    public void broadcastChanges()
     {
         // Lazy update the output before syncing the slots
         this.invCraftingGrid.updateCraftingOutput();
 
-        super.detectAndSendChanges();
+        super.broadcastChanges();
     }
 
     @Override
-    public ItemStack slotClick(int slotNum, int dragType, ClickType clickType, PlayerEntity player)
+    public ItemStack clicked(int slotNum, int dragType, ClickType clickType, PlayerEntity player)
     {
-        super.slotClick(slotNum, dragType, clickType, player);
+        super.clicked(slotNum, dragType, clickType, player);
 
         if (this.isClient == false && slotNum == this.craftingSlot)
         {
@@ -181,7 +181,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     }
 
     @Override
-    public void func_201771_a(RecipeItemHelper helper)
+    public void fillCraftSlotsStackedContents(RecipeItemHelper helper)
     {
         this.invCraftingGrid.fillStackedContents(helper);
     }

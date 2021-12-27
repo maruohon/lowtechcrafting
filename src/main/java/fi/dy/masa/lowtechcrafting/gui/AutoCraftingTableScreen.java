@@ -24,19 +24,19 @@ public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>/
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float gameTicks, int mouseX, int mouseY)
+    protected void renderBg(MatrixStack matrixStack, float gameTicks, int mouseX, int mouseY)
     {
         RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        this.minecraft.getTextureManager().bindTexture(this.guiTexture);
-        this.blit(matrixStack, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
+        this.minecraft.getTextureManager().bind(this.guiTexture);
+        this.blit(matrixStack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
     }
 
     @Override
-    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int mouseX, int mouseY)
+    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY)
     {
         String s = this.title.getString();
-        this.font.drawString(matrixStack, s, this.xSize / 2.0F - this.font.getStringWidth(s) / 2.0F, 5, 0x404040);
-        this.font.drawString(matrixStack, this.playerInventory.getDisplayName().getString(), 8, 73, 0x404040);
+        this.font.draw(matrixStack, s, this.imageWidth / 2.0F - this.font.width(s) / 2.0F, 5, 0x404040);
+        this.font.draw(matrixStack, this.inventory.getDisplayName().getString(), 8, 73, 0x404040);
     }
 
     @Override
@@ -44,6 +44,6 @@ public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>/
     {
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
-        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+        this.renderTooltip(matrixStack, mouseX, mouseY);
     }
 }

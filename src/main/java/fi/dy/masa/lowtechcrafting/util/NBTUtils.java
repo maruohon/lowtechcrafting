@@ -236,7 +236,7 @@ public class NBTUtils
     @Nonnull
     public static ItemStack loadItemStackFromTag(@Nonnull CompoundNBT tag)
     {
-        ItemStack stack = ItemStack.read(tag);
+        ItemStack stack = ItemStack.of(tag);
 
         if (tag.contains("ActualCount", Constants.NBT.TAG_INT))
         {
@@ -251,7 +251,7 @@ public class NBTUtils
     {
         if (stack.isEmpty() == false)
         {
-            stack.write(tag);
+            stack.save(tag);
 
             if (stack.getCount() > 127)
             {

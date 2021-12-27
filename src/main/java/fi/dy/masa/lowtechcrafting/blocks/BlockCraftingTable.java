@@ -33,13 +33,13 @@ public class BlockCraftingTable extends Block
 
     public BlockCraftingTable()
     {
-        super(Block.Properties.create(
+        super(Block.Properties.of(
                 Material.WOOD,
                 MaterialColor.WOOD)
-                .hardnessAndResistance(2.5F)
+                .strength(2.5F)
                 .sound(SoundType.WOOD));
 
-        this.setDefaultState(this.stateContainer.getBaseState());
+        this.registerDefaultState(this.stateDefinition.any());
     }
 
     @Override
@@ -60,26 +60,26 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
     {
         if (state.getBlock() != newState.getBlock())
         {
-            TileEntity te = world.getTileEntity(pos);
+            TileEntity te = world.getBlockEntity(pos);
 
             if (te instanceof TileEntityCrafting)
             {
                 ((TileEntityCrafting) te).dropInventories();
-                world.updateComparatorOutputLevel(pos, this);
+                world.updateNeighbourForOutputSignal(pos, this);
             }
 
-            world.removeTileEntity(pos);
+            world.removeBlockEntity(pos);
         }
     }
 
     @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
+    public void setPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
     {
-        TileEntity te = world.getTileEntity(pos);
+        TileEntity te = world.getBlockEntity(pos);
 
         if (te instanceof TileEntityCrafting)
         {
@@ -93,22 +93,22 @@ public class BlockCraftingTable extends Block
             }
             else
             {
-                if (stack.hasDisplayName())
+                if (stack.hasCustomHoverName())
                 {
-                    tec.setInventoryName(stack.getDisplayName().getString());
+                    tec.setInventoryName(stack.getHoverName().getString());
                 }
             }
         }
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) // onBlockActivated
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) // onBlockActivated
     {
-        TileEntity te = world.getTileEntity(pos);
+        TileEntity te = world.getBlockEntity(pos);
 
         if (te instanceof TileEntityCrafting && this.isTileEntityValid(te))
         {
-            if (world.isRemote == false && player instanceof ServerPlayerEntity)
+            if (world.isClientSide == false && player instanceof ServerPlayerEntity)
             {
                 NetworkHooks.openGui((ServerPlayerEntity) player, (TileEntityCrafting) te, pos);
             }
@@ -120,15 +120,15 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public boolean hasComparatorInputOverride(BlockState state)
+    public boolean hasAnalogOutputSignal(BlockState state)
     {
         return true;
     }
 
     @Override
-    public int getComparatorInputOverride(BlockState state, World world, BlockPos pos)
+    public int getAnalogOutputSignal(BlockState state, World world, BlockPos pos)
     {
-        TileEntity te = world.getTileEntity(pos);
+        TileEntity te = world.getBlockEntity(pos);
 
         if (te != null && this.isTileEntityValid(te))
         {

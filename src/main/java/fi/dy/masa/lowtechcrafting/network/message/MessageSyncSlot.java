@@ -63,10 +63,10 @@ public class MessageSyncSlot
                 return;
             }
 
-            if (mc.player.openContainer instanceof ContainerBase && this.windowId == mc.player.openContainer.windowId)
+            if (mc.player.containerMenu instanceof ContainerBase && this.windowId == mc.player.containerMenu.containerId)
             {
                 //System.out.printf("MessageSyncSlot - slot: %3d stack: %s\n", message.slotNum, message.stack);
-                ((ContainerBase) mc.player.openContainer).syncStackInSlot(this.slotNum, this.stack);
+                ((ContainerBase) mc.player.containerMenu).syncStackInSlot(this.slotNum, this.stack);
             }
 
             ctx.setPacketHandled(true);

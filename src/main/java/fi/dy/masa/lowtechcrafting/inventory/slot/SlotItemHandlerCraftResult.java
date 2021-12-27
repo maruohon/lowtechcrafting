@@ -29,35 +29,35 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
     }
 
     @Override
-    public boolean isItemValid(ItemStack stack)
+    public boolean mayPlace(ItemStack stack)
     {
         return false;
     }
 
     @Override
-    public ItemStack decrStackSize(int amount)
+    public ItemStack remove(int amount)
     {
-        if (this.getHasStack())
+        if (this.hasItem())
         {
-            this.amountCrafted += Math.min(amount, this.getStack().getCount());
+            this.amountCrafted += Math.min(amount, this.getItem().getCount());
         }
 
-        return super.decrStackSize(amount);
+        return super.remove(amount);
     }
 
     @Override
-    protected void onCrafting(ItemStack stack, int amount)
+    protected void onQuickCraft(ItemStack stack, int amount)
     {
         this.amountCrafted += amount;
-        this.onCrafting(stack);
+        this.checkTakeAchievements(stack);
     }
 
     @Override
-    protected void onCrafting(ItemStack stack)
+    protected void checkTakeAchievements(ItemStack stack)
     {
         if (this.amountCrafted > 0)
         {
-            stack.onCrafting(this.player.getEntityWorld(), this.player, this.amountCrafted);
+            stack.onCraftedBy(this.player.getCommandSenderWorld(), this.player, this.amountCrafted);
             net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
         }
 
@@ -65,9 +65,9 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
 
         IRecipe<?> recipe = this.craftResult.getRecipe();
 
-        if (recipe != null && recipe.isDynamic() == false)
+        if (recipe != null && recipe.isSpecial() == false)
         {
-            this.player.unlockRecipes(ImmutableList.of(recipe));
+            this.player.awardRecipes(ImmutableList.of(recipe));
             this.craftResult.setRecipe(null);
         }
     }

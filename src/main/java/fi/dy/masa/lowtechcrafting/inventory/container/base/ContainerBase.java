@@ -51,7 +51,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
 
         this.player = player;
         this.inventory = inventory;
-        this.isClient = player.getEntityWorld().isRemote;
+        this.isClient = player.getCommandSenderWorld().isClientSide;
         this.playerInventory = player.inventory;
         this.playerInv = new PlayerInvWrapperNoSync(player.inventory);
         this.mergeSlotRangesExtToPlayer = new ArrayList<MergeSlotRange>();
@@ -67,14 +67,14 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn)
+    public boolean stillValid(PlayerEntity playerIn)
     {
         return true;
     }
 
     protected void reAddSlots(int playerInventoryX, int playerInventoryY)
     {
-        this.inventorySlots.clear();
+        this.slots.clear();
         this.inventoryItemStacks.clear();
 
         this.addCustomInventorySlots();
@@ -99,7 +99,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         // This should usually be sufficient, assuming the custom slots are added first
         //this.customInventorySlots = new SlotRange(0, this.inventorySlots.size());
 
-        int playerInvStart = this.inventorySlots.size();
+        int playerInvStart = this.slots.size();
 
         // Player inventory
         for (int i = 0; i < 3; i++)
@@ -111,7 +111,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         }
 
         this.playerMainSlots = new MergeSlotRange(playerInvStart, 27);
-        int playerHotbarStart = this.inventorySlots.size();
+        int playerHotbarStart = this.slots.size();
 
         // Player inventory hotbar
         for (int i = 0; i < 9; i++)
@@ -125,15 +125,15 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
 
     protected void addOffhandSlot(int posX, int posY)
     {
-        this.playerOffhandSlots = new MergeSlotRange(this.inventorySlots.size(), 1);
+        this.playerOffhandSlots = new MergeSlotRange(this.slots.size(), 1);
 
         // Add the Offhand slot
         this.addSlot(new SlotItemHandlerGeneric(this.playerInv, 40, posX, posY)
         {
             @Override
-            public Pair<ResourceLocation, ResourceLocation> getBackground()
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon()
             {
-                return Pair.of(PlayerContainer.LOCATION_BLOCKS_TEXTURE, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
+                return Pair.of(PlayerContainer.BLOCK_ATLAS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
             }
         });
     }
@@ -159,17 +159,17 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack, Slot slot)
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot)
     {
         return (slot instanceof SlotItemHandler) &&
 //                (slot instanceof SlotItemHandlerCraftResult) == false &&
-                this.playerInventory.getItemStack().isEmpty() == false;
+                this.playerInventory.getCarried().isEmpty() == false;
     }
 
     @Override
     public Slot getSlot(int slotId)
     {
-        return slotId >= 0 && slotId < this.inventorySlots.size() ? super.getSlot(slotId) : null;
+        return slotId >= 0 && slotId < this.slots.size() ? super.getSlot(slotId) : null;
     }
 
     public SlotItemHandlerGeneric getSlotItemHandler(int slotId)
@@ -181,19 +181,19 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
 
     // Override because the vanilla lists are now private in 1.14 >_>
     @Override
-    public void addListener(IContainerListener listener)
+    public void addSlotListener(IContainerListener listener)
     {
         if (this.listeners.contains(listener) == false)
         {
             this.listeners.add(listener);
-            listener.sendAllContents(this, this.getInventory());
-            this.detectAndSendChanges();
+            listener.refreshContainer(this, this.getItems());
+            this.broadcastChanges();
         }
     }
 
     // Override because the vanilla lists are now private in 1.14 >_>
     @Override
-    public void removeListener(IContainerListener listener)
+    public void removeSlotListener(IContainerListener listener)
     {
         this.listeners.remove(listener);
     }
@@ -202,22 +202,22 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     @Override
     protected Slot addSlot(Slot slotIn)
     {
-        slotIn.slotNumber = this.inventorySlots.size();
-        this.inventorySlots.add(slotIn);
+        slotIn.index = this.slots.size();
+        this.slots.add(slotIn);
         this.inventoryItemStacks.add(ItemStack.EMPTY);
         return slotIn;
     }
 
     protected void syncCursorStackToClient()
     {
-        this.syncStackToClient(-1, this.player.inventory.getItemStack());
+        this.syncStackToClient(-1, this.player.inventory.getCarried());
     }
 
     protected void syncSlotToClient(int slotNum)
     {
-        if (slotNum >= 0 && slotNum < this.inventorySlots.size())
+        if (slotNum >= 0 && slotNum < this.slots.size())
         {
-            this.syncStackToClient(slotNum, this.getSlot(slotNum).getStack());
+            this.syncStackToClient(slotNum, this.getSlot(slotNum).getItem());
         }
     }
 
@@ -231,7 +231,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             if (listener instanceof ServerPlayerEntity)
             {
                 ServerPlayerEntity player = (ServerPlayerEntity) listener;
-                PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.windowId, slotNum, stack), player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
+                PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.containerId, slotNum, stack), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
             }
         }
     }
@@ -246,7 +246,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     {
         if (slotId == -1)
         {
-            this.player.inventory.setItemStack(stack);
+            this.player.inventory.setCarried(stack);
         }
         else
         {
@@ -258,22 +258,22 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             }
             else
             {
-                this.putStackInSlot(slotId, stack);
+                this.setItem(slotId, stack);
             }
         }
     }
 
     @Override
-    public void detectAndSendChanges()
+    public void broadcastChanges()
     {
         if (this.isClient == false)
         {
-            for (int slot = 0; slot < this.inventorySlots.size(); slot++)
+            for (int slot = 0; slot < this.slots.size(); slot++)
             {
-                ItemStack currentStack = this.inventorySlots.get(slot).getStack();
+                ItemStack currentStack = this.slots.get(slot).getItem();
                 ItemStack prevStack = this.inventoryItemStacks.get(slot);
 
-                if (ItemStack.areItemStacksEqual(prevStack, currentStack) == false)
+                if (ItemStack.matches(prevStack, currentStack) == false)
                 {
                     prevStack = currentStack.isEmpty() ? ItemStack.EMPTY : currentStack.copy();
                     this.inventoryItemStacks.set(slot, prevStack);
@@ -284,7 +284,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     }
 
     @Override
-    public ItemStack transferStackInSlot(PlayerEntity player, int slotNum)
+    public ItemStack quickMoveStack(PlayerEntity player, int slotNum)
     {
         this.transferStackFromSlot(player, slotNum);
         return ItemStack.EMPTY;
@@ -302,7 +302,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     {
         Slot slot = this.getSlot(slotNum);
 
-        if (slot == null || slot.getHasStack() == false || slot.canTakeStack(player) == false)
+        if (slot == null || slot.hasItem() == false || slot.mayPickup(player) == false)
         {
             return false;
         }
@@ -353,12 +353,12 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
-        if (slot == null || slot.getHasStack() == false || slot.canTakeStack(player) == false)
+        if (slot == null || slot.hasItem() == false || slot.mayPickup(player) == false)
         {
             return false;
         }
 
-        ItemStack stack = slot.getStack().copy();
+        ItemStack stack = slot.getItem().copy();
         int amount = Math.min(stack.getCount(), stack.getMaxStackSize());
         stack.setCount(amount);
 
@@ -370,7 +370,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             // If the item can't be put back to the slot, then we need to make sure that the whole
             // stack can be merged elsewhere before trying to (partially) merge it. Important for crafting slots!
             // Or if nothing could be merged, then also abort.
-            if (slot.isItemValid(stack) == false || stack.getCount() == amount)
+            if (slot.mayPlace(stack) == false || stack.getCount() == amount)
             {
                 return false;
             }
@@ -380,7 +380,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         }
 
         // Get the actual stack for non-simulated merging
-        stack = slot.decrStackSize(amount);
+        stack = slot.remove(amount);
         slot.onTake(player, stack);
 
         // Actually merge the items
@@ -404,14 +404,14 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
      */
     protected int getMaxStackSizeFromSlotAndStack(Slot slot, ItemStack stack)
     {
-        return stack.isEmpty() == false ? Math.min(slot.getItemStackLimit(stack), stack.getMaxStackSize()) : slot.getSlotStackLimit();
+        return stack.isEmpty() == false ? Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize()) : slot.getMaxStackSize();
     }
 
     /**
      * This should NOT be called from anywhere in this mod, but just in case...
      */
     @Override
-    protected boolean mergeItemStack(ItemStack stack, int slotStart, int slotEndExclusive, boolean reverse)
+    protected boolean moveItemStackTo(ItemStack stack, int slotStart, int slotEndExclusive, boolean reverse)
     {
         return false;
     }
@@ -433,7 +433,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         {
             SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotIndex);
 
-            if (slot != null && slot.getHasStack() && slot.isItemValid(stack))
+            if (slot != null && slot.hasItem() && slot.mayPlace(stack))
             {
                 stack = slot.insertItem(stack, simulate);
             }
@@ -450,7 +450,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             {
                 SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotIndex);
 
-                if (slot != null && slot.getHasStack() == false && slot.isItemValid(stack))
+                if (slot != null && slot.hasItem() == false && slot.mayPlace(stack))
                 {
                     stack = slot.insertItem(stack, simulate);
                 }
@@ -488,7 +488,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
 
     /*
     @Override
-    public void func_201771_a(RecipeItemHelper p_201771_1_)
+    public void fillCraftSlotsStackedContents(RecipeItemHelper p_201771_1_)
     {
     }
 

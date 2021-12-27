@@ -22,7 +22,7 @@ public class ByteBufUtilsLTC
             return;
         }
 
-        buf.writeInt(Item.getIdFromItem(stack.getItem()));
+        buf.writeInt(Item.getId(stack.getItem()));
         buf.writeInt(stack.getCount());
 
         CompoundNBT tag = stack.getItem().getShareTag(stack);
@@ -37,7 +37,7 @@ public class ByteBufUtilsLTC
         if (id >= 0)
         {
             int stackSize = buf.readInt();
-            stack = new ItemStack(Item.getItemById(id), stackSize);
+            stack = new ItemStack(Item.byId(id), stackSize);
             stack.setTag(readNBTTagCompoundFromBuffer(buf));
         }
 

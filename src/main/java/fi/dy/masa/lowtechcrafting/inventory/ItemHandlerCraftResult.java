@@ -120,7 +120,7 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
             return;
         }
 
-        stack.onCrafting(world, player, stack.getCount());
+        stack.onCraftedBy(world, player, stack.getCount());
         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
         net.minecraftforge.common.ForgeHooks.setCraftingPlayer(player);
 
@@ -135,25 +135,25 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 
         for (int slot = 0; slot < remainingItems.size(); slot++)
         {
-            ItemStack stackInSlot = this.craftMatrix.getStackInSlot(slot);
+            ItemStack stackInSlot = this.craftMatrix.getItem(slot);
             ItemStack remainingItemsInSlot = remainingItems.get(slot);
 
             if (stackInSlot.isEmpty() == false)
             {
-                this.craftMatrix.decrStackSize(slot, 1);
-                stackInSlot = this.craftMatrix.getStackInSlot(slot);
+                this.craftMatrix.removeItem(slot, 1);
+                stackInSlot = this.craftMatrix.getItem(slot);
             }
 
             if (remainingItemsInSlot.isEmpty() == false)
             {
                 if (stackInSlot.isEmpty())
                 {
-                    this.craftMatrix.setInventorySlotContents(slot, remainingItemsInSlot);
+                    this.craftMatrix.setItem(slot, remainingItemsInSlot);
                 }
                 else if (InventoryUtils.areItemStacksEqual(stackInSlot, remainingItemsInSlot))
                 {
                     remainingItemsInSlot.grow(stackInSlot.getCount());
-                    this.craftMatrix.setInventorySlotContents(slot, remainingItemsInSlot);
+                    this.craftMatrix.setItem(slot, remainingItemsInSlot);
                 }
                 else
                 {
@@ -190,11 +190,11 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
         }
         else
         {
-            NonNullList<ItemStack> items = NonNullList.withSize(this.craftMatrix.getSizeInventory(), ItemStack.EMPTY);
+            NonNullList<ItemStack> items = NonNullList.withSize(this.craftMatrix.getContainerSize(), ItemStack.EMPTY);
 
             for (int i = 0; i < items.size(); ++i)
             {
-                items.set(i, this.craftMatrix.getStackInSlot(i));
+                items.set(i, this.craftMatrix.getItem(i));
             }
 
             return items;

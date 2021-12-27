@@ -11,7 +11,7 @@ public class PlayerMainInvWrapperNoSync extends RangedWrapper
 
     public PlayerMainInvWrapperNoSync(PlayerInventory inv)
     {
-        super(new InvWrapper(inv), 0, inv.mainInventory.size());
+        super(new InvWrapper(inv), 0, inv.items.size());
 
         this.inventoryPlayer = inv;
     }
@@ -28,9 +28,9 @@ public class PlayerMainInvWrapperNoSync extends RangedWrapper
 
             if (stackSlot.isEmpty() == false)
             {
-                if (this.getPlayerInventory().player.getEntityWorld().isRemote)
+                if (this.getPlayerInventory().player.getCommandSenderWorld().isClientSide)
                 {
-                    stackSlot.setAnimationsToGo(5);
+                    stackSlot.setPopTime(5);
                 }
             }
         }

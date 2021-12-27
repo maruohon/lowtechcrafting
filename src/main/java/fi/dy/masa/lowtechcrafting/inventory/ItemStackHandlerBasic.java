@@ -93,7 +93,7 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
             // If the slot is already full, or the to-be-inserted item is different
             if (existingStackSize >= max ||
                 stack.getItem() != existingStack.getItem() ||
-                ItemStack.areItemStackTagsEqual(stack, existingStack) == false)
+                ItemStack.tagMatches(stack, existingStack) == false)
             {
                 return stack;
             }

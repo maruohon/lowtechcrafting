@@ -18,7 +18,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     }
 
     @Override
-    public int getSlotStackLimit()
+    public int getMaxStackSize()
     {
         //System.out.println("SlotItemHandlerGeneric.getSlotStackLimit()");
         if (this.getItemHandler() instanceof IItemHandlerSize)
@@ -26,11 +26,11 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
             return ((IItemHandlerSize) this.getItemHandler()).getInventoryStackLimit();
         }
 
-        return super.getSlotStackLimit();
+        return super.getMaxStackSize();
     }
 
     @Override
-    public int getItemStackLimit(ItemStack stack)
+    public int getMaxStackSize(ItemStack stack)
     {
         //System.out.println("SlotItemHandlerGeneric.getItemStackLimit(stack)");
         if (stack.isEmpty() == false && this.getItemHandler() instanceof IItemHandlerSize)
@@ -38,17 +38,17 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
             return ((IItemHandlerSize) this.getItemHandler()).getItemStackLimit(this.getSlotIndex(), stack);
         }
 
-        return this.getSlotStackLimit();
+        return this.getMaxStackSize();
     }
 
     @Override
-    public ItemStack getStack()
+    public ItemStack getItem()
     {
         return this.getItemHandler().getStackInSlot(this.getSlotIndex());
     }
 
     @Override
-    public void putStack(ItemStack stack)
+    public void set(ItemStack stack)
     {
         //System.out.printf("Slot.putStack: slot = %d, inv ind: %d, %s, inv = %s\n", this.slotNumber, this.getSlotIndexForSync(), this, this.getItemHandler());
         if (this.getItemHandler() instanceof IItemHandlerModifiable)
@@ -62,7 +62,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
             this.getItemHandler().insertItem(this.getSlotIndexForSync(), stack, false);
         }
 
-        this.onSlotChanged();
+        this.setChanged();
     }
 
     public void syncStack(ItemStack stack)
@@ -74,7 +74,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
         }
         else
         {
-            this.putStack(stack);
+            this.set(stack);
         }
     }
 
@@ -89,7 +89,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     }
 
     @Override
-    public ItemStack decrStackSize(int amount)
+    public ItemStack remove(int amount)
     {
         return this.getItemHandler().extractItem(this.getSlotIndex(), amount, false);
     }
@@ -98,7 +98,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
      * Returns true if the item would be valid for an empty slot.
      */
     @Override
-    public boolean isItemValid(ItemStack stack)
+    public boolean mayPlace(ItemStack stack)
     {
         if (this.getItemHandler() instanceof IItemHandlerSelective)
         {
@@ -109,7 +109,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     }
 
     @Override
-    public boolean canTakeStack(PlayerEntity player)
+    public boolean mayPickup(PlayerEntity player)
     {
         if (this.getItemHandler() instanceof IItemHandlerSelective)
         {

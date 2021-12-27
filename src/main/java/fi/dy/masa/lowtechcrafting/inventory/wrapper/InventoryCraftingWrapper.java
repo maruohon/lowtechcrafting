@@ -75,15 +75,15 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public int getSizeInventory()
+    public int getContainerSize()
     {
         return this.craftMatrix.getSlots();
     }
 
     @Override
-    public ItemStack getStackInSlot(int slot)
+    public ItemStack getItem(int slot)
     {
-        return slot >= this.getSizeInventory() ? ItemStack.EMPTY : this.craftMatrix.getStackInSlot(slot);
+        return slot >= this.getContainerSize() ? ItemStack.EMPTY : this.craftMatrix.getStackInSlot(slot);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
 
         for (int slot = 0; slot < invSize; ++slot)
         {
-            if (this.getStackInSlot(slot).isEmpty() == false)
+            if (this.getItem(slot).isEmpty() == false)
             {
                 return false;
             }
@@ -122,7 +122,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public ItemStack removeStackFromSlot(int slot)
+    public ItemStack removeItemNoUpdate(int slot)
     {
         ItemStack stack = this.craftMatrix.extractItem(slot, this.craftMatrix.getStackInSlot(slot).getCount(), false);
 
@@ -136,7 +136,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public ItemStack decrStackSize(int slot, int amount)
+    public ItemStack removeItem(int slot, int amount)
     {
         // This goes against the Forge IItemHandler contract,
         // but the vanilla ServerRecipeBookHelper goes into an infinite loop
@@ -156,20 +156,20 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public void setInventorySlotContents(int slot, ItemStack stack)
+    public void setItem(int slot, ItemStack stack)
     {
         this.craftMatrix.setStackInSlot(slot, stack);
         this.checkUpdateGridCacheForSlot(slot);
     }
 
     @Override
-    public int getInventoryStackLimit()
+    public int getMaxStackSize()
     {
         return this.craftMatrix.getSlotLimit(0);
     }
 
     @Override
-    public void clear()
+    public void clearContent()
     {
         for (int slot = 0; slot < this.craftMatrix.getSlots(); slot++)
         {
@@ -180,13 +180,13 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public boolean isUsableByPlayer(PlayerEntity player)
+    public boolean stillValid(PlayerEntity player)
     {
         return true;
     }
 
     @Override
-    public boolean isItemValidForSlot(int slot, ItemStack stack)
+    public boolean canPlaceItem(int slot, ItemStack stack)
     {
         return true;
     }
@@ -200,13 +200,13 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     {
         World world = this.getWorld();
 
-        if (this.gridDirty && this.inhibitResultUpdate == false && world != null && world.isRemote == false)
+        if (this.gridDirty && this.inhibitResultUpdate == false && world != null && world.isClientSide == false)
         {
             Optional<ICraftingRecipe> optional = this.lastCraftedRecipe;
 
             if (optional.isPresent() == false || optional.get().matches(this, world) == false)
             {
-                optional = world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, this, world);
+                optional = world.getServer().getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, this, world);
             }
 
             ItemStack stack = ItemStack.EMPTY;
@@ -216,7 +216,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
                 ICraftingRecipe recipe = optional.get();
                 this.craftResult.setRecipe(recipe);
                 this.recipe = recipe;
-                stack = recipe.getCraftingResult(this);
+                stack = recipe.assemble(this);
             }
 
             this.setCraftResult(stack);
@@ -240,15 +240,15 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
 
         for (int slot = 0; slot < invSize; slot++)
         {
-            recipeItemHelper.accountPlainStack(this.craftMatrix.getStackInSlot(slot));
+            recipeItemHelper.accountSimpleStack(this.craftMatrix.getStackInSlot(slot));
         }
     }
 
-    public void openInventory(PlayerEntity player)
+    public void startOpen(PlayerEntity player)
     {
     }
 
-    public void closeInventory(PlayerEntity player)
+    public void stopOpen(PlayerEntity player)
     {
     }
 

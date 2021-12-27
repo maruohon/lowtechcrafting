@@ -9,6 +9,6 @@ public class ClientInit
 {
     public static void registerScreenFactories(final FMLClientSetupEvent event)
     {
-        ScreenManager.registerFactory(ModObjects.CONTAINER_TYPE_CRAFTING_TABLE, AutoCraftingTableScreen::new);
+        ScreenManager.register(ModObjects.CONTAINER_TYPE_CRAFTING_TABLE, AutoCraftingTableScreen::new);
     }
 }

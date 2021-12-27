@@ -93,7 +93,7 @@ public class InventoryUtils
             return stack1.isEmpty() == stack2.isEmpty();
         }
 
-        return stack1.isItemEqual(stack2) && ItemStack.areItemStackTagsEqual(stack1, stack2);
+        return stack1.sameItem(stack2) && ItemStack.tagMatches(stack1, stack2);
     }
 
     /**
