@@ -5,7 +5,7 @@ import net.minecraftforge.items.IItemHandler;
 
 public interface IItemHandlerSize extends IItemHandler
 {
-    public int getInventoryStackLimit();
+    int getInventoryStackLimit();
 
-    public int getItemStackLimit(int slot, ItemStack stack);
+    int getItemStackLimit(int slot, ItemStack stack);
 }
