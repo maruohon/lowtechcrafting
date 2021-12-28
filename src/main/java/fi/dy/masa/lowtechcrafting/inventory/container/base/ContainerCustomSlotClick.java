@@ -2,72 +2,24 @@ package fi.dy.masa.lowtechcrafting.inventory.container.base;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.annotation.Nullable;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
-import net.minecraftforge.items.IItemHandler;
 
 public class ContainerCustomSlotClick extends ContainerBase //<C extends net.minecraft.inventory.IInventory> extends ContainerBase<C>
 {
-    /**
-     * This is a non-Container-wrapped, possibly a lockable inventory.
-     * If this field is set, it is used for the stack size cycling
-     * and slot locking features, if applicable.
-     */
-    @Nullable
-    protected IItemHandlerSize inventoryNonContainerWrapped;
     protected boolean isDragging;
     protected DragType dragType;
-    protected final Set<Integer> draggedSlots = new HashSet<Integer>();
-    protected int selectedSlot = -1;
-    private int selectedSlotLast = -1;
+    protected final Set<Integer> draggedSlots = new HashSet<>();
 
-    public ContainerCustomSlotClick(int windowId, ContainerType<?> type, PlayerEntity player, IItemHandler inventory)
+    public ContainerCustomSlotClick(int windowId, MenuType<?> type, Player player, IItemHandler inventory)
     {
         super(windowId, type, player, inventory);
-    }
-
-    public int getSelectedSlot()
-    {
-        return this.selectedSlot;
-    }
-
-    @Override
-    public void broadcastChanges()
-    {
-        if (this.isClient == false)
-        {
-            for (int i = 0; i < this.listeners.size(); i++)
-            {
-                if (this.selectedSlot != this.selectedSlotLast)
-                {
-                    this.listeners.get(i).setContainerData(this, 0x0100, this.selectedSlot & 0xFFFF);
-                }
-            }
-
-            this.selectedSlotLast = this.selectedSlot;
-        }
-
-        super.broadcastChanges();
-    }
-
-    @Override
-    public void setData(int id, int data)
-    {
-        if (id == 0x0100)
-        {
-            // Convert from a short back to int
-            this.selectedSlot = (int) ((short) data);
-        }
-        else
-        {
-            super.setData(id, data);
-        }
     }
 
     protected void startDragging(DragType dragType)
@@ -107,7 +59,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
 
     protected boolean takeItemsFromSlotToCursor(SlotItemHandlerGeneric slot, int amount)
     {
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
         ItemStack stackSlot = slot.getItem();
 
         if (slot.mayPickup(this.player) == false || stackSlot.isEmpty() ||
@@ -149,7 +101,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
                 stackCursor.grow(stackSlot.getCount());
             }
 
-            this.playerInventory.setCarried(stackCursor);
+            this.setCursorStack(stackCursor);
 
             return true;
         }
@@ -192,7 +144,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
 
     protected void endDragging()
     {
-        if (this.playerInventory.getCarried().isEmpty() == false)
+        if (this.getCursorStack().isEmpty() == false)
         {
             if (this.dragType == DragType.DRAG_MIDDLE)
             {
@@ -209,7 +161,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
 
     protected void endDraggingLeftOrRight(boolean isRightClick)
     {
-        ItemStack stackCursor = this.playerInventory.getCarried().copy();
+        ItemStack stackCursor = this.getCursorStack().copy();
         int numSlots = this.draggedSlots.size();
         int itemsPerSlot = isRightClick ? 1 : (numSlots > 0 ? stackCursor.getCount() / numSlots : stackCursor.getCount());
 
@@ -230,16 +182,16 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
             }
         }
 
-        this.playerInventory.setCarried(stackCursor);
+        this.setCursorStack(stackCursor);
     }
 
     protected void endDraggingMiddle()
     {
-        if (this.player.abilities.instabuild)
+        if (this.player.getAbilities().instabuild)
         {
             for (int slotNum : this.draggedSlots)
             {
-                ItemStack stackCursor = this.playerInventory.getCarried().copy();
+                ItemStack stackCursor = this.getCursorStack().copy();
                 SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
                 if (slot != null && (slot.hasItem() == false || InventoryUtils.areItemStacksEqual(stackCursor, slot.getItem())))
@@ -256,9 +208,9 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         }
     }
 
-    protected void leftClickOutsideInventory(PlayerEntity player)
+    protected void leftClickOutsideInventory(Player player)
     {
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
 
         if (stackCursor.isEmpty() == false)
         {
@@ -272,23 +224,23 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
             }
 
             player.drop(stackCursor, true);
-            this.playerInventory.setCarried(ItemStack.EMPTY);
+            this.setCursorStack(ItemStack.EMPTY);
         }
     }
 
-    protected void rightClickOutsideInventory(PlayerEntity player)
+    protected void rightClickOutsideInventory(Player player)
     {
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
 
         if (stackCursor.isEmpty() == false)
         {
             ItemStack stackDrop = stackCursor.split(1);
             player.drop(stackDrop, true);
-            this.playerInventory.setCarried(stackCursor.isEmpty() ? ItemStack.EMPTY : stackCursor);
+            this.setCursorStack(stackCursor.isEmpty() ? ItemStack.EMPTY : stackCursor);
         }
     }
 
-    protected void leftClickSlot(int slotNum, PlayerEntity player)
+    protected void leftClickSlot(int slotNum, Player player)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
@@ -297,7 +249,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
             return;
         }
 
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
         ItemStack stackSlot = slot.getItem();
 
         // Items in cursor
@@ -309,7 +261,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
                 // Can put items into the slot
                 if (slot.mayPlace(stackCursor))
                 {
-                    this.playerInventory.setCarried(slot.insertItem(stackCursor, false));
+                    this.setCursorStack(slot.insertItem(stackCursor, false));
                 }
                 // Can't put items into the slot (for example a crafting output slot); take items instead
                 else if (stackSlot.isEmpty() == false)
@@ -322,7 +274,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
                      stackSlot.getCount() <= stackSlot.getMaxStackSize() &&
                      slot.getMaxStackSize(stackCursor) >= stackCursor.getCount())
             {
-                this.playerInventory.setCarried(slot.remove(stackSlot.getCount()));
+                this.setCursorStack(slot.remove(stackSlot.getCount()));
                 slot.onTake(this.player, stackSlot);
                 slot.insertItem(stackCursor, false);
             }
@@ -334,7 +286,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         }
     }
 
-    protected void rightClickSlot(int slotNum, PlayerEntity player)
+    protected void rightClickSlot(int slotNum, Player player)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
@@ -343,7 +295,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
             return;
         }
 
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
         ItemStack stackSlot = slot.getItem();
 
         // Items in cursor
@@ -360,7 +312,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
                         stackCursor.grow(1);
                     }
 
-                    this.playerInventory.setCarried(stackCursor.isEmpty() ? ItemStack.EMPTY : stackCursor);
+                    this.setCursorStack(stackCursor.isEmpty() ? ItemStack.EMPTY : stackCursor);
                 }
                 // Can't put items into the slot (for example a furnace output slot or a crafting output slot); take items instead
                 else if (stackSlot.isEmpty() == false)
@@ -373,7 +325,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
                     stackSlot.getCount() <= stackSlot.getMaxStackSize() &&
                     slot.getMaxStackSize(stackCursor) >= stackCursor.getCount())
             {
-                this.playerInventory.setCarried(slot.remove(stackSlot.getCount()));
+                this.setCursorStack(slot.remove(stackSlot.getCount()));
                 slot.onTake(this.player, stackSlot);
                 slot.insertItem(stackCursor, false);
             }
@@ -394,49 +346,15 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         }
     }
 
-    protected void middleClickSlot(int slotNum, PlayerEntity player)
+    protected void middleClickSlot(int slotNum, Player player)
     {
-        if (player.abilities.instabuild &&
-            player.inventory.getCarried().isEmpty() &&
+        if (player.getAbilities().instabuild &&
+            this.getCursorStack().isEmpty() &&
             this.getSlot(slotNum).hasItem())
         {
             ItemStack stack = this.getSlot(slotNum).getItem().copy();
             stack.setCount(stack.getMaxStackSize());
-            player.inventory.setCarried(stack);
-        }
-        else
-        {
-            this.swapSlots(slotNum, player);
-        }
-    }
-
-    protected void swapSlots(int slotNum, PlayerEntity player)
-    {
-        SlotItemHandlerGeneric slot1 = this.getSlotItemHandler(slotNum);
-
-        // Only allow swapping in this inventory (which supports the large stacks)
-        // NOTE: This assumes that the swappable "main" inventory is the "inventory" reference in this Container
-        if (slot1 != null && slot1.getItemHandler() == this.inventory)
-        {
-            if (this.selectedSlot >= 0 && this.selectedSlot < this.slots.size())
-            {
-                // Don't swap with self
-                if (this.selectedSlot != slotNum)
-                {
-                    SlotItemHandlerGeneric slot2 = this.getSlotItemHandler(this.selectedSlot);
-
-                    if (slot2 != null)
-                    {
-                        this.swapSlots(slot1, slot2);
-                    }
-                }
-
-                this.selectedSlot = -1;
-            }
-            else
-            {
-                this.selectedSlot = slotNum;
-            }
+            this.setCursorStack(stack);
         }
     }
 
@@ -491,7 +409,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
     protected boolean cycleStackSize(int slotNum, IItemHandlerSize inv)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
-        ItemStack stackCursor = player.inventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
 
         if (slot != null && stackCursor.isEmpty() == false)
         {
@@ -545,26 +463,26 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         return false;
     }
 
-    protected void leftDoubleClickSlot(int slotNum, PlayerEntity player)
+    protected void leftDoubleClickSlot(int slotNum, Player player)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
-        ItemStack stackCursor = this.playerInventory.getCarried();
+        ItemStack stackCursor = this.getCursorStack();
 
         if (slot != null && stackCursor.isEmpty() == false && this.canTakeItemForPickAll(stackCursor, slot))
         {
             // FIXME add a slot-aware version
-            ItemStack stackTmp = InventoryUtils.collectItemsFromInventory(
-                    slot.getItemHandler(), stackCursor, stackCursor.getMaxStackSize() - stackCursor.getCount(), true);
+            ItemStack stackTmp = InventoryUtils.collectItemsFromInventory(slot.getItemHandler(),
+                            stackCursor, stackCursor.getMaxStackSize() - stackCursor.getCount(), true);
 
             if (stackTmp.isEmpty() == false)
             {
                 stackCursor.grow(stackTmp.getCount());
-                this.playerInventory.setCarried(stackCursor);
+                this.setCursorStack(stackCursor);
             }
         }
     }
 
-    protected void shiftClickSlot(int slotNum, PlayerEntity player)
+    protected void shiftClickSlot(int slotNum, Player player)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
         ItemStack stackSlot = slot != null ? slot.getItem() : ItemStack.EMPTY;
@@ -575,7 +493,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         }
     }
 
-    protected void pressDropKey(int slotNum, PlayerEntity player, boolean wholeStack)
+    protected void pressDropKey(int slotNum, Player player, boolean wholeStack)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
         ItemStack stackSlot = slot != null ? slot.getItem() : ItemStack.EMPTY;
@@ -592,7 +510,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         }
     }
 
-    protected void pressHotbarKey(int slotNum, int button, PlayerEntity player)
+    protected void pressHotbarKey(int slotNum, int button, Player player)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
@@ -650,7 +568,7 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
     }
 
     @Override
-    public ItemStack clicked(int slotNum, int dragType, ClickType clickType, PlayerEntity player)
+    public void clicked(int slotNum, int dragType, ClickType clickType, Player player)
     {
         //String side = this.player.worldObj.isRemote ? "client" : "server";
         //EnderUtilities.logger.info(String.format("slotClick(): side: %s slotNum: %d, button: %d type: %s", side, slotNum, dragType, clickType));
@@ -785,8 +703,6 @@ public class ContainerCustomSlotClick extends ContainerBase //<C extends net.min
         {
             this.broadcastChanges();
         }
-
-        return ItemStack.EMPTY;
     }
 
     public enum DragType

@@ -1,28 +1,28 @@
 package fi.dy.masa.lowtechcrafting.util;
 
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 
 public class EntityUtils
 {
-    public static void dropItemStacksInWorld(World worldIn, BlockPos pos, ItemStack stack, int amountOverride, boolean dropFullStacks)
+    public static void dropItemStacksInWorld(Level worldIn, BlockPos pos, ItemStack stack, int amountOverride, boolean dropFullStacks)
     {
         dropItemStacksInWorld(worldIn, pos, stack, amountOverride, dropFullStacks, true);
     }
 
-    public static void dropItemStacksInWorld(World worldIn, BlockPos pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
+    public static void dropItemStacksInWorld(Level worldIn, BlockPos pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
     {
         double x = worldIn.random.nextFloat() * -0.5d + 0.75d + pos.getX();
         double y = worldIn.random.nextFloat() * -0.5d + 0.75d + pos.getY();
         double z = worldIn.random.nextFloat() * -0.5d + 0.75d + pos.getZ();
 
-        dropItemStacksInWorld(worldIn, new Vector3d(x, y, z), stack, amountOverride, dropFullStacks, randomMotion);
+        dropItemStacksInWorld(worldIn, new Vec3(x, y, z), stack, amountOverride, dropFullStacks, randomMotion);
     }
 
-    public static void dropItemStacksInWorld(World worldIn, Vector3d pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
+    public static void dropItemStacksInWorld(Level worldIn, Vec3 pos, ItemStack stack, int amountOverride, boolean dropFullStacks, boolean randomMotion)
     {
         int amount = stack.getCount();
         int max = stack.getMaxStackSize();
@@ -49,18 +49,18 @@ public class EntityUtils
             ItemEntity item = new ItemEntity(worldIn, pos.x, pos.y, pos.z, dropStack);
             item.setDefaultPickUpDelay();
 
-            Vector3d motion;
+            Vec3 motion;
 
             if (randomMotion)
             {
                 double motionScale = 0.04d;
-                motion = new Vector3d( worldIn.random.nextGaussian() * motionScale,
-                                    worldIn.random.nextGaussian() * motionScale + 0.3,
-                                    worldIn.random.nextGaussian() * motionScale);
+                motion = new Vec3(worldIn.random.nextGaussian() * motionScale,
+                                  worldIn.random.nextGaussian() * motionScale + 0.3,
+                                  worldIn.random.nextGaussian() * motionScale);
             }
             else
             {
-                motion = new Vector3d(0, 0, 0);
+                motion = new Vec3(0, 0, 0);
             }
 
             item.setDeltaMovement(motion);

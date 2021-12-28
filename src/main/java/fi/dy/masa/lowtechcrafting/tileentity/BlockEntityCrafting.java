@@ -4,21 +4,22 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.common.util.LazyOptional;
@@ -34,7 +35,7 @@ import fi.dy.masa.lowtechcrafting.reference.Names;
 import fi.dy.masa.lowtechcrafting.reference.Reference;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 
-public class TileEntityCrafting extends TileEntity implements INamedContainerProvider
+public class BlockEntityCrafting extends BlockEntity implements MenuProvider
 {
     private final ItemStackHandlerTileEntity itemHandlerCraftingGrid;
     private final ItemStackHandlerTileEntity itemHandlerOutputBuffer;
@@ -47,9 +48,9 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     private String customInventoryName;
     private FakePlayer fakePlayer;
 
-    public TileEntityCrafting()
+    public BlockEntityCrafting(BlockPos pos, BlockState state)
     {
-        super(ModObjects.TILE_TYPE_CRAFTING_TABLE);
+        super(ModObjects.TILE_TYPE_CRAFTING_TABLE, pos, state);
 
         this.tileEntityName = Names.CRAFTING_TABLE;
         this.itemHandlerCraftingGrid    = new ItemStackHandlerTileEntity(0, 9, 64, false, "Items", this);
@@ -96,37 +97,37 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     @Nonnull
     protected FakePlayer getPlayer()
     {
-        if (this.fakePlayer == null && this.getLevel() instanceof ServerWorld)
+        if (this.fakePlayer == null && this.getLevel() instanceof ServerLevel)
         {
             int dim = this.getLevel().dimension().location().toString().hashCode();
 
-            this.fakePlayer = FakePlayerFactory.get((ServerWorld) this.getLevel(),
+            this.fakePlayer = FakePlayerFactory.get((ServerLevel) this.getLevel(),
                     new GameProfile(new UUID(dim, dim), Reference.MOD_ID + ":" + this.tileEntityName));
         }
 
         return this.fakePlayer;
     }
 
-    public void readFromNBTCustom(CompoundNBT nbt)
+    public void readFromNBTCustom(CompoundTag nbt)
     {
         this.itemHandlerOutputBuffer.deserializeNBT(nbt);
         this.inventoryCrafting.deserializeNBT(nbt);
 
-        if (nbt.contains("CustomName", Constants.NBT.TAG_STRING))
+        if (nbt.contains("CustomName", Tag.TAG_STRING))
         {
             this.customInventoryName = nbt.getString("CustomName");
         }
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT tag)
+    public void load(CompoundTag tag)
     {
-        super.load(state, tag);
+        super.load(tag);
         this.readFromNBTCustom(tag); // This call needs to be at the super-most custom TE class
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT nbt)
+    public CompoundTag save(CompoundTag nbt)
     {
         nbt = super.save(nbt);
 
@@ -142,11 +143,11 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     }
 
     @Override
-    public CompoundNBT getUpdateTag()
+    public CompoundTag getUpdateTag()
     {
         // The tag from this method is used for the initial chunk packet,
         // and it needs to have the TE position!
-        CompoundNBT nbt = new CompoundNBT();
+        CompoundTag nbt = new CompoundTag();
         nbt.putInt("x", this.getBlockPos().getX());
         nbt.putInt("y", this.getBlockPos().getY());
         nbt.putInt("z", this.getBlockPos().getZ());
@@ -157,11 +158,11 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
 
     @Override
     @Nullable
-    public SUpdateTileEntityPacket getUpdatePacket()
+    public ClientboundBlockEntityDataPacket getUpdatePacket()
     {
         if (this.getLevel() != null)
         {
-            return new SUpdateTileEntityPacket(this.getBlockPos(), 0, this.getUpdateTag());
+            return new ClientboundBlockEntityDataPacket(this.getBlockPos(), 0, this.getUpdateTag());
         }
 
         return null;
@@ -198,13 +199,13 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
     }
 
     @Override
-    public ITextComponent getDisplayName()
+    public Component getDisplayName()
     {
-        return new TranslationTextComponent(this.getName());
+        return new TranslatableComponent(this.getName());
     }
 
     @Override
-    public Container createMenu(int windowId, PlayerInventory playerInv, PlayerEntity player)
+    public AbstractContainerMenu createMenu(int windowId, Inventory playerInv, Player player)
     {
         return new ContainerCrafting(windowId, player, this);
     }
@@ -258,11 +259,8 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
                     stack.shrink(1);
                     return stack;
                 }
-                // Could not insert, return the original stack
-                else
-                {
-                    return stack;
-                }
+                // else: Could not insert, return the original stack
+                return stack;
             }
             // Only inserting one item, handle it directly
             else
@@ -280,10 +278,7 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
         @Override
         public boolean isItemValid(int slot, ItemStack stack)
         {
-            if (slot == 0 || this.inventoryCrafter.getStackInSlot(slot).isEmpty() == false)
-            {
-                return false;
-            }
+            return slot != 0 && this.inventoryCrafter.getStackInSlot(slot).isEmpty() != false;
 
             /*
             // Already items in the output buffer slot, don't insert anything
@@ -292,8 +287,6 @@ public class TileEntityCrafting extends TileEntity implements INamedContainerPro
                 return false;
             }
             */
-
-            return true;
         }
     }
 }

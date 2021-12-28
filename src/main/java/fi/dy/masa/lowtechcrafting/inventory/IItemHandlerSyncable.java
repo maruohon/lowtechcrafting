@@ -1,6 +1,6 @@
 package fi.dy.masa.lowtechcrafting.inventory;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 public interface IItemHandlerSyncable
 {

@@ -1,10 +1,12 @@
 package fi.dy.masa.lowtechcrafting.inventory.container;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.ContainerCustomSlotClick;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.MergeSlotRange;
@@ -12,26 +14,23 @@ import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
 import fi.dy.masa.lowtechcrafting.reference.ModObjects;
-import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
+import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.wrapper.InvWrapper;
 
 public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraftingWrapper> implements IRecipeContainer
 {
-    protected final TileEntityCrafting te;
+    protected final BlockEntityCrafting te;
     private final InventoryCraftingWrapper invCraftingGrid;
     private final ItemHandlerCraftResult invCraftResult;
     private final IItemHandler invCraftingWrapper;
     private int craftingSlot;
 
-    public ContainerCrafting(int windowId, PlayerInventory playerInv, PacketBuffer extraData)
+    public ContainerCrafting(int windowId, Inventory playerInv, FriendlyByteBuf extraData)
     {
-        this(windowId, playerInv.player, ((TileEntityCrafting) playerInv.player.getCommandSenderWorld().getBlockEntity(extraData.readBlockPos())));
+        this(windowId, playerInv.player, ((BlockEntityCrafting) playerInv.player.getCommandSenderWorld().getBlockEntity(extraData.readBlockPos())));
     }
 
-    public ContainerCrafting(int windowId, PlayerEntity player, TileEntityCrafting te)
+    public ContainerCrafting(int windowId, Player player, BlockEntityCrafting te)
     {
         super(windowId, ModObjects.CONTAINER_TYPE_CRAFTING_TABLE, player, te.getCraftingWrapperInventory());
 
@@ -40,11 +39,11 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
         this.invCraftResult = te.getCraftResultInventory();
         this.invCraftingWrapper = te.getCraftingWrapperInventory();
 
-        this.reAddSlots(8, 84);
+        this.addSlots(8, 84);
     }
 
     @Override
-    public boolean stillValid(PlayerEntity player)
+    public boolean stillValid(Player player)
     {
         return this.te.isRemoved() == false;
     }
@@ -80,7 +79,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     }
 
     @Override
-    protected void shiftClickSlot(int slotNum, PlayerEntity player)
+    protected void shiftClickSlot(int slotNum, Player player)
     {
         if (slotNum != this.craftingSlot)
         {
@@ -108,7 +107,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
     }
 
     @Override
-    protected void rightClickSlot(int slotNum, PlayerEntity player)
+    protected void rightClickSlot(int slotNum, Player player)
     {
         // Crafting output slot: just take the full stack as you would when left clicking
         if (slotNum == this.craftingSlot)
@@ -150,20 +149,6 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
         this.invCraftingGrid.updateCraftingOutput();
 
         super.broadcastChanges();
-    }
-
-    @Override
-    public ItemStack clicked(int slotNum, int dragType, ClickType clickType, PlayerEntity player)
-    {
-        super.clicked(slotNum, dragType, clickType, player);
-
-        if (this.isClient == false && slotNum == this.craftingSlot)
-        {
-            this.syncSlotToClient(this.craftingSlot);
-            this.syncCursorStackToClient();
-        }
-
-        return ItemStack.EMPTY;
     }
 
     /*

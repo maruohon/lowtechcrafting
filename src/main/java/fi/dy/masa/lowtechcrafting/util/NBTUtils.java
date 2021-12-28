@@ -2,11 +2,11 @@ package fi.dy.masa.lowtechcrafting.util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.NonNullList;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 
 public class NBTUtils
 {
@@ -14,7 +14,7 @@ public class NBTUtils
      * Sets the root compound tag in the given ItemStack. An empty compound will be stripped completely.
      */
     @Nonnull
-    public static ItemStack setRootCompoundTag(@Nonnull ItemStack stack, @Nullable CompoundNBT nbt)
+    public static ItemStack setRootCompoundTag(@Nonnull ItemStack stack, @Nullable CompoundTag nbt)
     {
         if (nbt != null && nbt.isEmpty())
         {
@@ -30,9 +30,9 @@ public class NBTUtils
      * If one doesn't exist, then it will be created and added if <b>create</b> is true, otherwise null is returned.
      */
     @Nullable
-    public static CompoundNBT getRootCompoundTag(@Nonnull ItemStack stack, boolean create)
+    public static CompoundTag getRootCompoundTag(@Nonnull ItemStack stack, boolean create)
     {
-        CompoundNBT nbt = stack.getTag();
+        CompoundTag nbt = stack.getTag();
 
         if (create == false)
         {
@@ -42,7 +42,7 @@ public class NBTUtils
         // create = true
         if (nbt == null)
         {
-            nbt = new CompoundNBT();
+            nbt = new CompoundTag();
             stack.setTag(nbt);
         }
 
@@ -54,7 +54,7 @@ public class NBTUtils
      * If one doesn't exist, then it will be created and added if <b>create</b> is true, otherwise null is returned.
      */
     @Nullable
-    public static CompoundNBT getCompoundTag(@Nullable CompoundNBT nbt, @Nonnull String tagName, boolean create)
+    public static CompoundTag getCompoundTag(@Nullable CompoundTag nbt, @Nonnull String tagName, boolean create)
     {
         if (nbt == null)
         {
@@ -63,14 +63,14 @@ public class NBTUtils
 
         if (create == false)
         {
-            return nbt.contains(tagName, Constants.NBT.TAG_COMPOUND) ? nbt.getCompound(tagName) : null;
+            return nbt.contains(tagName, Tag.TAG_COMPOUND) ? nbt.getCompound(tagName) : null;
         }
 
         // create = true
 
-        if (nbt.contains(tagName, Constants.NBT.TAG_COMPOUND) == false)
+        if (nbt.contains(tagName, Tag.TAG_COMPOUND) == false)
         {
-            nbt.put(tagName, new CompoundNBT());
+            nbt.put(tagName, new CompoundTag());
         }
 
         return nbt.getCompound(tagName);
@@ -83,9 +83,9 @@ public class NBTUtils
      * If <b>create</b> is <b>true</b>, then the tag(s) are created and added if necessary.
      */
     @Nullable
-    public static CompoundNBT getCompoundTag(@Nonnull ItemStack stack, @Nullable String tagName, boolean create)
+    public static CompoundTag getCompoundTag(@Nonnull ItemStack stack, @Nullable String tagName, boolean create)
     {
-        CompoundNBT nbt = getRootCompoundTag(stack, create);
+        CompoundTag nbt = getRootCompoundTag(stack, create);
 
         if (tagName != null)
         {
@@ -101,7 +101,7 @@ public class NBTUtils
      */
     public static byte getByte(@Nonnull ItemStack stack, @Nullable String containerTagName, @Nonnull String tagName)
     {
-        CompoundNBT nbt = getCompoundTag(stack, containerTagName, false);
+        CompoundTag nbt = getCompoundTag(stack, containerTagName, false);
         return nbt != null ? nbt.getByte(tagName) : 0;
     }
 
@@ -111,7 +111,7 @@ public class NBTUtils
      */
     public static void setByte(@Nonnull ItemStack stack, @Nullable String containerTagName, @Nonnull String tagName, byte value)
     {
-        CompoundNBT nbt = getCompoundTag(stack, containerTagName, true);
+        CompoundTag nbt = getCompoundTag(stack, containerTagName, true);
         nbt.putByte(tagName, value);
     }
 
@@ -119,7 +119,7 @@ public class NBTUtils
      * Cycle a byte value in the given NBT. If <b>containerTagName</b>
      * is not null, then the value is stored inside a compound tag by that name.
      */
-    public static void cycleByteValue(@Nonnull CompoundNBT nbt, @Nonnull String tagName, int minValue, int maxValue, boolean reverse)
+    public static void cycleByteValue(@Nonnull CompoundTag nbt, @Nonnull String tagName, int minValue, int maxValue, boolean reverse)
     {
         byte value = nbt.getByte(tagName);
 
@@ -149,7 +149,7 @@ public class NBTUtils
     public static void cycleByteValue(@Nonnull ItemStack stack, @Nullable String containerTagName,
                                       @Nonnull String tagName, int maxValue, boolean reverse)
     {
-        CompoundNBT nbt = getCompoundTag(stack, containerTagName, true);
+        CompoundTag nbt = getCompoundTag(stack, containerTagName, true);
         cycleByteValue(nbt, tagName, 0, maxValue, reverse);
     }
 
@@ -161,7 +161,7 @@ public class NBTUtils
      * @param nbt
      * @param tagName
      */
-    public static void readByteArrayIntoIntArray(int[] arr, CompoundNBT nbt, String tagName)
+    public static void readByteArrayIntoIntArray(int[] arr, CompoundTag nbt, String tagName)
     {
         byte[] arrBytes = nbt.getByteArray(tagName);
         final int len = Math.min(arr.length, arrBytes.length);
@@ -178,7 +178,7 @@ public class NBTUtils
      * @param nbt
      * @param tagName
      */
-    public static void writeIntArrayAsByteArray(int[] arr, CompoundNBT nbt, String tagName)
+    public static void writeIntArrayAsByteArray(int[] arr, CompoundTag nbt, String tagName)
     {
         byte[] bytes = new byte[arr.length];
 
@@ -198,15 +198,11 @@ public class NBTUtils
      * @param nbt
      * @param tagName
      */
-    public static void readByteArray(byte[] arr, CompoundNBT nbt, String tagName)
+    public static void readByteArray(byte[] arr, CompoundTag nbt, String tagName)
     {
         byte[] arrNbt = nbt.getByteArray(tagName);
         final int len = Math.min(arr.length, arrNbt.length);
-
-        for (int i = 0; i < len; i++)
-        {
-            arr[i] = arrNbt[i];
-        }
+        System.arraycopy(arrNbt, 0, arr, 0, len);
     }
 
     /**
@@ -217,15 +213,11 @@ public class NBTUtils
      * @param nbt
      * @param tagName
      */
-    public static void readIntArray(int[] arr, CompoundNBT nbt, String tagName)
+    public static void readIntArray(int[] arr, CompoundTag nbt, String tagName)
     {
         int[] arrNbt = nbt.getIntArray(tagName);
         final int len = Math.min(arr.length, arrNbt.length);
-
-        for (int i = 0; i < len; i++)
-        {
-            arr[i] = arrNbt[i];
-        }
+        System.arraycopy(arrNbt, 0, arr, 0, len);
     }
 
     /**
@@ -234,11 +226,11 @@ public class NBTUtils
      * @return
      */
     @Nonnull
-    public static ItemStack loadItemStackFromTag(@Nonnull CompoundNBT tag)
+    public static ItemStack loadItemStackFromTag(@Nonnull CompoundTag tag)
     {
         ItemStack stack = ItemStack.of(tag);
 
-        if (tag.contains("ActualCount", Constants.NBT.TAG_INT))
+        if (tag.contains("ActualCount", Tag.TAG_INT))
         {
             stack.setCount(tag.getInt("ActualCount"));
         }
@@ -247,7 +239,7 @@ public class NBTUtils
     }
 
     @Nonnull
-    public static CompoundNBT storeItemStackInTag(@Nonnull ItemStack stack, @Nonnull CompoundNBT tag)
+    public static CompoundTag storeItemStackInTag(@Nonnull ItemStack stack, @Nonnull CompoundTag tag)
     {
         if (stack.isEmpty() == false)
         {
@@ -271,20 +263,20 @@ public class NBTUtils
      * @param items
      * @param tagName
      */
-    public static void readStoredItemsFromTag(@Nonnull CompoundNBT nbt, NonNullList<ItemStack> items, @Nonnull String tagName)
+    public static void readStoredItemsFromTag(@Nonnull CompoundTag nbt, NonNullList<ItemStack> items, @Nonnull String tagName)
     {
-        if (nbt.contains(tagName, Constants.NBT.TAG_LIST) == false)
+        if (nbt.contains(tagName, Tag.TAG_LIST) == false)
         {
             return;
         }
 
-        ListNBT nbtTagList = nbt.getList(tagName, Constants.NBT.TAG_COMPOUND);
+        ListTag nbtTagList = nbt.getList(tagName, Tag.TAG_COMPOUND);
         int num = nbtTagList.size();
         int listSize = items.size();
 
         for (int i = 0; i < num; ++i)
         {
-            CompoundNBT tag = nbtTagList.getCompound(i);
+            CompoundTag tag = nbtTagList.getCompound(i);
             int slotNum = tag.getShort("Slot");
 
             if (slotNum >= 0 && slotNum < listSize)
@@ -305,21 +297,21 @@ public class NBTUtils
      * @return the list of ItemStack read. Can be an empty list.
      */
     @Nonnull
-    public static NonNullList<ItemStack> readStoredItemsFromTag(@Nonnull CompoundNBT nbt, @Nonnull String tagName)
+    public static NonNullList<ItemStack> readStoredItemsFromTag(@Nonnull CompoundTag nbt, @Nonnull String tagName)
     {
         NonNullList<ItemStack> items = NonNullList.create();
 
-        if (nbt.contains(tagName, Constants.NBT.TAG_LIST) == false)
+        if (nbt.contains(tagName, Tag.TAG_LIST) == false)
         {
             return items;
         }
 
-        ListNBT nbtTagList = nbt.getList(tagName, Constants.NBT.TAG_COMPOUND);
+        ListTag nbtTagList = nbt.getList(tagName, Tag.TAG_COMPOUND);
         final int size = nbtTagList.size();
 
         for (int i = 0; i < size; ++i)
         {
-            CompoundNBT tag = nbtTagList.getCompound(i);
+            CompoundTag tag = nbtTagList.getCompound(i);
             items.add(loadItemStackFromTag(tag));
         }
 
@@ -331,9 +323,9 @@ public class NBTUtils
      * @param items
      */
     @Nonnull
-    public static ListNBT createTagListForItems(NonNullList<ItemStack> items)
+    public static ListTag createTagListForItems(NonNullList<ItemStack> items)
     {
-        ListNBT nbtTagList = new ListNBT();
+        ListTag nbtTagList = new ListTag();
         final int invSlots = items.size();
 
         // Write all the ItemStacks into a TAG_List
@@ -343,7 +335,7 @@ public class NBTUtils
 
             if (stack.isEmpty() == false)
             {
-                CompoundNBT tag = storeItemStackInTag(stack, new CompoundNBT());
+                CompoundTag tag = storeItemStackInTag(stack, new CompoundTag());
 
                 if (invSlots <= 127)
                 {
@@ -370,21 +362,21 @@ public class NBTUtils
      * @param keepExtraSlots set to true to append existing items in slots that are outside of the currently written slot range
      */
     @Nonnull
-    public static CompoundNBT writeItemsToTag(@Nonnull CompoundNBT nbt, NonNullList<ItemStack> items,
+    public static CompoundTag writeItemsToTag(@Nonnull CompoundTag nbt, NonNullList<ItemStack> items,
                                                  @Nonnull String tagName, boolean keepExtraSlots)
     {
         int invSlots = items.size();
-        ListNBT nbtTagList = createTagListForItems(items);
+        ListTag nbtTagList = createTagListForItems(items);
 
-        if (keepExtraSlots && nbt.contains(tagName, Constants.NBT.TAG_LIST))
+        if (keepExtraSlots && nbt.contains(tagName, Tag.TAG_LIST))
         {
             // Read the old items and append any existing items that are outside the current written slot range
-            ListNBT nbtTagListExisting = nbt.getList(tagName, Constants.NBT.TAG_COMPOUND);
+            ListTag nbtTagListExisting = nbt.getList(tagName, Tag.TAG_COMPOUND);
             final int count = nbtTagListExisting.size();
 
             for (int i = 0; i < count; i++)
             {
-                CompoundNBT tag = nbtTagListExisting.getCompound(i);
+                CompoundTag tag = nbtTagListExisting.getCompound(i);
                 int slotNum = tag.getShort("Slot");
 
                 if (slotNum >= invSlots)

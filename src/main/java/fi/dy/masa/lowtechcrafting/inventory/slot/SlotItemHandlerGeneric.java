@@ -1,7 +1,7 @@
 package fi.dy.masa.lowtechcrafting.inventory.slot;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSelective;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
@@ -109,7 +109,7 @@ public class SlotItemHandlerGeneric extends SlotItemHandler
     }
 
     @Override
-    public boolean mayPickup(PlayerEntity player)
+    public boolean mayPickup(Player player)
     {
         if (this.getItemHandler() instanceof IItemHandlerSelective)
         {

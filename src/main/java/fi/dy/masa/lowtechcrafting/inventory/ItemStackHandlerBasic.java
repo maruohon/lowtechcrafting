@@ -1,16 +1,16 @@
 package fi.dy.masa.lowtechcrafting.inventory;
 
 import javax.annotation.Nonnull;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.MathHelper;
-import fi.dy.masa.lowtechcrafting.util.NBTUtils;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import fi.dy.masa.lowtechcrafting.util.NBTUtils;
 
-public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerializable<CompoundNBT>, IItemHandlerSelective, IItemHandlerSize
+public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerializable<CompoundTag>, IItemHandlerSelective, IItemHandlerSize
 {
     protected final NonNullList<ItemStack> items;
     private final boolean allowCustomStackSizes;
@@ -34,7 +34,7 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
 
     public void setInventorySize(int invSize)
     {
-        this.inventorySize = MathHelper.clamp(invSize, 0, this.items.size());
+        this.inventorySize = Mth.clamp(invSize, 0, this.items.size());
     }
 
     @Override
@@ -185,10 +185,10 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
     }
 
     @Override
-    public CompoundNBT serializeNBT()
+    public CompoundTag serializeNBT()
     {
-        CompoundNBT wrapper = new CompoundNBT();
-        CompoundNBT nbt = new CompoundNBT();
+        CompoundTag wrapper = new CompoundTag();
+        CompoundTag nbt = new CompoundTag();
 
         if (this.inventorySize != this.items.size())
         {
@@ -202,11 +202,11 @@ public class ItemStackHandlerBasic implements IItemHandlerModifiable, INBTSerial
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt)
+    public void deserializeNBT(CompoundTag nbt)
     {
         nbt = nbt.getCompound(this.tagName);
 
-        if (nbt.contains("SlotCount", Constants.NBT.TAG_BYTE))
+        if (nbt.contains("SlotCount", Tag.TAG_BYTE))
         {
             this.setInventorySize(nbt.getByte("SlotCount"));
         }

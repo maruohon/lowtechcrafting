@@ -2,10 +2,10 @@ package fi.dy.masa.lowtechcrafting.util;
 
 import java.util.List;
 import javax.annotation.Nonnull;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerBasic;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.SlotRange;
@@ -64,7 +64,7 @@ public class InventoryUtils
      * @param pos
      * @param inv
      */
-    public static void dropInventoryContentsInWorld(World world, BlockPos pos, IItemHandler inv)
+    public static void dropInventoryContentsInWorld(Level world, BlockPos pos, IItemHandler inv)
     {
         final int invSize = inv.getSlots();
 

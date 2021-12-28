@@ -1,13 +1,13 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSyncable;
 
 public class InvWrapperSyncable extends InvWrapper implements IItemHandlerSyncable
 {
-    public InvWrapperSyncable(IInventory inv)
+    public InvWrapperSyncable(Container inv)
     {
         super(inv);
     }

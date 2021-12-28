@@ -1,18 +1,18 @@
 package fi.dy.masa.lowtechcrafting.inventory;
 
-import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
+import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 
 public class ItemStackHandlerTileEntity extends ItemStackHandlerBasic
 {
-    protected final TileEntityCrafting te;
+    protected final BlockEntityCrafting te;
     protected final int inventoryId;
 
-    public ItemStackHandlerTileEntity(int invSize, TileEntityCrafting te)
+    public ItemStackHandlerTileEntity(int invSize, BlockEntityCrafting te)
     {
         this(0, invSize, te);
     }
 
-    public ItemStackHandlerTileEntity(int inventoryId, int invSize, TileEntityCrafting te)
+    public ItemStackHandlerTileEntity(int inventoryId, int invSize, BlockEntityCrafting te)
     {
         super(invSize);
         this.te = te;
@@ -20,7 +20,7 @@ public class ItemStackHandlerTileEntity extends ItemStackHandlerBasic
     }
 
     public ItemStackHandlerTileEntity(int inventoryId, int invSize, int stackLimit,
-                                      boolean allowCustomStackSizes, String tagName, TileEntityCrafting te)
+                                      boolean allowCustomStackSizes, String tagName, BlockEntityCrafting te)
     {
         super(invSize, stackLimit, allowCustomStackSizes, tagName);
         this.te = te;

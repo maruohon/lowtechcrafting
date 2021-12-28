@@ -1,13 +1,13 @@
 package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import fi.dy.masa.lowtechcrafting.inventory.IItemHandlerSize;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
-public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize, INBTSerializable<CompoundNBT>
+public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize, INBTSerializable<CompoundTag>
 {
     private final IItemHandlerModifiable inventoryCraftingGridBase;
     private final IItemHandler inventoryOutputBuffer;
@@ -154,13 +154,13 @@ public class ItemHandlerWrapperCrafter implements IItemHandler, IItemHandlerSize
     }
 
     @Override
-    public CompoundNBT serializeNBT()
+    public CompoundTag serializeNBT()
     {
-        return new CompoundNBT();
+        return new CompoundTag();
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt)
+    public void deserializeNBT(CompoundTag nbt)
     {
     }
 }

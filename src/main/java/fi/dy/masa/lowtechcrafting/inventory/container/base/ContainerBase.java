@@ -2,35 +2,31 @@ package fi.dy.masa.lowtechcrafting.inventory.container.base;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.ParametersAreNonnullByDefault;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.IContainerListener;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
 import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.PlayerInvWrapperNoSync;
-import fi.dy.masa.lowtechcrafting.network.PacketHandler;
-import fi.dy.masa.lowtechcrafting.network.message.MessageSyncSlot;
 
-public class ContainerBase extends Container //<C extends net.minecraft.inventory.IInventory> extends RecipeBookContainer<C>
+@MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
+public class ContainerBase extends AbstractContainerMenu //<C extends net.minecraft.inventory.IInventory> extends RecipeBookContainer<C>
 {
-    public static final int GUI_ACTION_SCROLL_MOVE  = 0;
-    public static final int GUI_ACTION_SCROLL_SET   = 1;
-    protected final PlayerEntity player;
+    protected final Player player;
     protected final boolean isClient;
-    protected final PlayerInventory playerInventory;
+    protected final Inventory playerInventory;
     protected final IItemHandlerModifiable playerInv;
     protected final IItemHandler inventory;
     protected MergeSlotRange customInventorySlots;
@@ -42,20 +38,17 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     protected List<MergeSlotRange> mergeSlotRangesExtToPlayer;
     protected List<MergeSlotRange> mergeSlotRangesPlayerToExt;
 
-    protected final List<IContainerListener> listeners = new ArrayList<>();
-    protected final NonNullList<ItemStack> inventoryItemStacks = NonNullList.create();
-
-    public ContainerBase(int windowId, ContainerType<?> type, PlayerEntity player, IItemHandler inventory)
+    public ContainerBase(int windowId, MenuType<?> type, Player player, IItemHandler inventory)
     {
         super(type, windowId);
 
         this.player = player;
         this.inventory = inventory;
         this.isClient = player.getCommandSenderWorld().isClientSide;
-        this.playerInventory = player.inventory;
-        this.playerInv = new PlayerInvWrapperNoSync(player.inventory);
-        this.mergeSlotRangesExtToPlayer = new ArrayList<MergeSlotRange>();
-        this.mergeSlotRangesPlayerToExt = new ArrayList<MergeSlotRange>();
+        this.playerInventory = player.getInventory();
+        this.playerInv = new PlayerInvWrapperNoSync(this.playerInventory);
+        this.mergeSlotRangesExtToPlayer = new ArrayList<>();
+        this.mergeSlotRangesPlayerToExt = new ArrayList<>();
 
         // Init the ranges to an empty range by default
         this.customInventorySlots       = new MergeSlotRange(0, 0);
@@ -67,16 +60,13 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     }
 
     @Override
-    public boolean stillValid(PlayerEntity playerIn)
+    public boolean stillValid(Player playerIn)
     {
         return true;
     }
 
-    protected void reAddSlots(int playerInventoryX, int playerInventoryY)
+    protected void addSlots(int playerInventoryX, int playerInventoryY)
     {
-        this.slots.clear();
-        this.inventoryItemStacks.clear();
-
         this.addCustomInventorySlots();
         this.addPlayerInventorySlots(playerInventoryX, playerInventoryY);
     }
@@ -133,12 +123,12 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
             @Override
             public Pair<ResourceLocation, ResourceLocation> getNoItemIcon()
             {
-                return Pair.of(PlayerContainer.BLOCK_ATLAS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD);
+                return Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
             }
         });
     }
 
-    public PlayerEntity getPlayer()
+    public Player getPlayer()
     {
         return this.player;
     }
@@ -158,12 +148,22 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         return this.customInventorySlots;
     }
 
+    protected ItemStack getCursorStack()
+    {
+        return this.getCarried();
+    }
+
+    protected void setCursorStack(ItemStack stack)
+    {
+        this.setCarried(stack);
+    }
+
     @Override
     public boolean canTakeItemForPickAll(ItemStack stack, Slot slot)
     {
         return (slot instanceof SlotItemHandler) &&
-//                (slot instanceof SlotItemHandlerCraftResult) == false &&
-                this.playerInventory.getCarried().isEmpty() == false;
+                //(slot instanceof SlotItemHandlerCraftResult) == false &&
+                this.getCursorStack().isEmpty() == false;
     }
 
     @Override
@@ -179,112 +179,23 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         return (slot instanceof SlotItemHandlerGeneric) ? (SlotItemHandlerGeneric) slot : null;
     }
 
-    // Override because the vanilla lists are now private in 1.14 >_>
     @Override
-    public void addSlotListener(IContainerListener listener)
+    public void setItem(int slotNum, int stateId, ItemStack stack)
     {
-        if (this.listeners.contains(listener) == false)
+        Slot slot = this.getSlot(slotNum);
+
+        if (slot instanceof SlotItemHandlerGeneric)
         {
-            this.listeners.add(listener);
-            listener.refreshContainer(this, this.getItems());
-            this.broadcastChanges();
-        }
-    }
-
-    // Override because the vanilla lists are now private in 1.14 >_>
-    @Override
-    public void removeSlotListener(IContainerListener listener)
-    {
-        this.listeners.remove(listener);
-    }
-
-    // Override because the vanilla lists are now private in 1.14 >_>
-    @Override
-    protected Slot addSlot(Slot slotIn)
-    {
-        slotIn.index = this.slots.size();
-        this.slots.add(slotIn);
-        this.inventoryItemStacks.add(ItemStack.EMPTY);
-        return slotIn;
-    }
-
-    protected void syncCursorStackToClient()
-    {
-        this.syncStackToClient(-1, this.player.inventory.getCarried());
-    }
-
-    protected void syncSlotToClient(int slotNum)
-    {
-        if (slotNum >= 0 && slotNum < this.slots.size())
-        {
-            this.syncStackToClient(slotNum, this.getSlot(slotNum).getItem());
-        }
-    }
-
-    protected void syncStackToClient(int slotNum, ItemStack stack)
-    {
-        for (int i = 0; i < this.listeners.size(); ++i)
-        {
-            IContainerListener listener = this.listeners.get(i);
-
-            //listener.sendSlotContents(this, slotNum, stack);
-            if (listener instanceof ServerPlayerEntity)
-            {
-                ServerPlayerEntity player = (ServerPlayerEntity) listener;
-                PacketHandler.INSTANCE.sendTo(new MessageSyncSlot(this.containerId, slotNum, stack), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
-            }
-        }
-    }
-
-    /**
-     * Will put the given stack into the slot, ignoring any validity checks.
-     * Note: A slotId == -1 will sync the stack in the player's cursor.
-     * This will and should only be used for syncing slots to the client.
-     * @param stack
-     */
-    public void syncStackInSlot(int slotId, ItemStack stack)
-    {
-        if (slotId == -1)
-        {
-            this.player.inventory.setCarried(stack);
+            ((SlotItemHandlerGeneric) slot).syncStack(stack);
         }
         else
         {
-            Slot slot = this.getSlot(slotId);
-
-            if (slot instanceof SlotItemHandlerGeneric)
-            {
-                ((SlotItemHandlerGeneric) slot).syncStack(stack);
-            }
-            else
-            {
-                this.setItem(slotId, stack);
-            }
+            super.setItem(slotNum, stateId, stack);
         }
     }
 
     @Override
-    public void broadcastChanges()
-    {
-        if (this.isClient == false)
-        {
-            for (int slot = 0; slot < this.slots.size(); slot++)
-            {
-                ItemStack currentStack = this.slots.get(slot).getItem();
-                ItemStack prevStack = this.inventoryItemStacks.get(slot);
-
-                if (ItemStack.matches(prevStack, currentStack) == false)
-                {
-                    prevStack = currentStack.isEmpty() ? ItemStack.EMPTY : currentStack.copy();
-                    this.inventoryItemStacks.set(slot, prevStack);
-                    this.syncStackToClient(slot, prevStack);
-                }
-            }
-        }
-    }
-
-    @Override
-    public ItemStack quickMoveStack(PlayerEntity player, int slotNum)
+    public ItemStack quickMoveStack(Player player, int slotNum)
     {
         this.transferStackFromSlot(player, slotNum);
         return ItemStack.EMPTY;
@@ -298,7 +209,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
      * the list of "priority slot" SlotRanges, and after that come the rest of the "custom inventory".
      * Returns false if no items were moved, true otherwise
      */
-    protected boolean transferStackFromSlot(PlayerEntity player, int slotNum)
+    protected boolean transferStackFromSlot(Player player, int slotNum)
     {
         Slot slot = this.getSlot(slotNum);
 
@@ -322,7 +233,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         return this.transferStackToSlotRange(player, slotNum, this.playerMainSlotsIncHotbar, true);
     }
 
-    protected boolean transferStackFromPlayerMainInventory(PlayerEntity player, int slotNum)
+    protected boolean transferStackFromPlayerMainInventory(Player player, int slotNum)
     {
         if (this.transferStackToSlotRange(player, slotNum, this.playerArmorSlots, false))
         {
@@ -337,7 +248,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         return this.transferStackToSlotRange(player, slotNum, this.customInventorySlots, false);
     }
 
-    protected boolean transferStackToPrioritySlots(PlayerEntity player, int slotNum, boolean reverse)
+    protected boolean transferStackToPrioritySlots(Player player, int slotNum, boolean reverse)
     {
         boolean ret = false;
 
@@ -349,7 +260,7 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
         return ret;
     }
 
-    protected boolean transferStackToSlotRange(PlayerEntity player, int slotNum, MergeSlotRange slotRange, boolean reverse)
+    protected boolean transferStackToSlotRange(Player player, int slotNum, MergeSlotRange slotRange, boolean reverse)
     {
         SlotItemHandlerGeneric slot = this.getSlotItemHandler(slotNum);
 
@@ -481,50 +392,4 @@ public class ContainerBase extends Container //<C extends net.minecraft.inventor
     {
         this.mergeSlotRangesPlayerToExt.add(new MergeSlotRange(start, numSlots, existingOnly));
     }
-
-    public void performGuiAction(PlayerEntity player, int action, int element)
-    {
-    }
-
-    /*
-    @Override
-    public void fillCraftSlotsStackedContents(RecipeItemHelper p_201771_1_)
-    {
-    }
-
-    @Override
-    public void clear()
-    {
-    }
-
-    @Override
-    public boolean matches(IRecipe<? super C> recipeIn)
-    {
-        return false;
-    }
-
-    @Override
-    public int getOutputSlot()
-    {
-        return 0;
-    }
-
-    @Override
-    public int getWidth()
-    {
-        return 3;
-    }
-
-    @Override
-    public int getHeight()
-    {
-        return 3;
-    }
-
-    @Override
-    public int getSize()
-    {
-        return 10;
-    }
-    */
 }

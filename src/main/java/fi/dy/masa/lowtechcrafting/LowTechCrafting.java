@@ -2,28 +2,26 @@ package fi.dy.masa.lowtechcrafting;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.tileentity.TileEntityType;
-import fi.dy.masa.lowtechcrafting.blocks.BlockCraftingTable;
-import fi.dy.masa.lowtechcrafting.client.ClientInit;
-import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;
-import fi.dy.masa.lowtechcrafting.network.PacketHandler;
-import fi.dy.masa.lowtechcrafting.reference.ModObjects;
-import fi.dy.masa.lowtechcrafting.reference.Names;
-import fi.dy.masa.lowtechcrafting.reference.Reference;
-import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.IContainerFactory;
+import net.minecraftforge.fmllegacy.network.IContainerFactory;
+import fi.dy.masa.lowtechcrafting.blocks.BlockCraftingTable;
+import fi.dy.masa.lowtechcrafting.client.ClientInit;
+import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;
+import fi.dy.masa.lowtechcrafting.reference.ModObjects;
+import fi.dy.masa.lowtechcrafting.reference.Names;
+import fi.dy.masa.lowtechcrafting.reference.Reference;
+import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 
 @Mod(Reference.MOD_ID)
 public class LowTechCrafting
@@ -32,13 +30,7 @@ public class LowTechCrafting
 
     public LowTechCrafting()
     {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientInit::registerScreenFactories);
-    }
-
-    public void onCommonSetup(final FMLCommonSetupEvent  event)
-    {
-        PacketHandler.registerMessages();
     }
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -52,7 +44,7 @@ public class LowTechCrafting
         }
 
         @SubscribeEvent
-        public static void onRegisterContainerTypes(RegistryEvent.Register<ContainerType<?>> event)
+        public static void onRegisterContainerTypes(RegistryEvent.Register<MenuType<?>> event)
         {
             String name = Reference.MOD_ID + ":" + Names.CRAFTING_TABLE;
             event.getRegistry().register(createContainerType(ContainerCrafting::new).setRegistryName(name));
@@ -63,19 +55,19 @@ public class LowTechCrafting
         {
             String name = Reference.MOD_ID + ":" + Names.CRAFTING_TABLE;
             Block block = ModObjects.BLOCK_CRAFTING_TABLE;
-            event.getRegistry().register((new BlockItem(block, (new Item.Properties()).tab(ItemGroup.TAB_REDSTONE))).setRegistryName(name));
+            event.getRegistry().register((new BlockItem(block, (new Item.Properties()).tab(CreativeModeTab.TAB_REDSTONE))).setRegistryName(name));
         }
 
         @SubscribeEvent
-        public static void onRegisterBlockEntityTypes(RegistryEvent.Register<TileEntityType<?>> event)
+        public static void onRegisterBlockEntityTypes(RegistryEvent.Register<BlockEntityType<?>> event)
         {
             String name = Reference.MOD_ID + ":" + Names.CRAFTING_TABLE;
-            event.getRegistry().register(TileEntityType.Builder.of(TileEntityCrafting::new, Blocks.CRAFTING_TABLE).build(null).setRegistryName(name));
+            event.getRegistry().register(BlockEntityType.Builder.of(BlockEntityCrafting::new, Blocks.CRAFTING_TABLE).build(null).setRegistryName(name));
         }
 
-        public static <T extends Container> ContainerType<T> createContainerType(IContainerFactory<T> factory)
+        public static <T extends AbstractContainerMenu> MenuType<T> createContainerType(IContainerFactory<T> factory)
         {
-            return new ContainerType<>(factory);
+            return new MenuType<>(factory);
         }
     }
 }

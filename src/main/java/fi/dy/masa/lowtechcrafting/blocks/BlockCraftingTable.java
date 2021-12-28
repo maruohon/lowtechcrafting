@@ -1,36 +1,38 @@
 package fi.dy.masa.lowtechcrafting.blocks;
 
 import javax.annotation.Nullable;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import fi.dy.masa.lowtechcrafting.tileentity.TileEntityCrafting;
-import net.minecraftforge.common.util.Constants;
+import javax.annotation.ParametersAreNonnullByDefault;
+import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 
-public class BlockCraftingTable extends Block
+@MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
+public class BlockCraftingTable extends BaseEntityBlock
 {
-    public static final ResourceLocation CONTENTS = new ResourceLocation("contents");
-
     public BlockCraftingTable()
     {
         super(Block.Properties.of(
@@ -43,32 +45,33 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state)
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
     {
-        return true;
+        return new BlockEntityCrafting(pos, state);
     }
 
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world)
-    {
-        return new TileEntityCrafting();
-    }
-
-    public boolean isTileEntityValid(TileEntity te)
+    public boolean isTileEntityValid(BlockEntity te)
     {
         return te != null && te.isRemoved() == false;
     }
 
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
+    public RenderShape getRenderShape(BlockState p_49232_)
+    {
+        return RenderShape.MODEL;
+    }
+
+    @Override
+    @Deprecated
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving)
     {
         if (state.getBlock() != newState.getBlock())
         {
-            TileEntity te = world.getBlockEntity(pos);
+            BlockEntity te = world.getBlockEntity(pos);
 
-            if (te instanceof TileEntityCrafting)
+            if (te instanceof BlockEntityCrafting)
             {
-                ((TileEntityCrafting) te).dropInventories();
+                ((BlockEntityCrafting) te).dropInventories();
                 world.updateNeighbourForOutputSignal(pos, this);
             }
 
@@ -77,17 +80,16 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public void setPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack)
     {
-        TileEntity te = world.getBlockEntity(pos);
+        BlockEntity te = world.getBlockEntity(pos);
 
-        if (te instanceof TileEntityCrafting)
+        if (te instanceof BlockEntityCrafting tec)
         {
-            TileEntityCrafting tec = (TileEntityCrafting) te;
-            CompoundNBT nbt = stack.getTag();
+            CompoundTag nbt = stack.getTag();
 
             // If the ItemStack has a tag containing saved TE data, restore it to the just placed block/TE
-            if (nbt != null && nbt.contains("BlockEntityTag", Constants.NBT.TAG_COMPOUND))
+            if (nbt != null && nbt.contains("BlockEntityTag", Tag.TAG_COMPOUND))
             {
                 tec.readFromNBTCustom(nbt.getCompound("BlockEntityTag"));
             }
@@ -102,33 +104,36 @@ public class BlockCraftingTable extends Block
     }
 
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) // onBlockActivated
+    @Deprecated
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) // onBlockActivated
     {
-        TileEntity te = world.getBlockEntity(pos);
+        BlockEntity te = world.getBlockEntity(pos);
 
-        if (te instanceof TileEntityCrafting && this.isTileEntityValid(te))
+        if (te instanceof BlockEntityCrafting && this.isTileEntityValid(te))
         {
-            if (world.isClientSide == false && player instanceof ServerPlayerEntity)
+            if (world.isClientSide == false && player instanceof ServerPlayer)
             {
-                NetworkHooks.openGui((ServerPlayerEntity) player, (TileEntityCrafting) te, pos);
+                NetworkHooks.openGui((ServerPlayer) player, (BlockEntityCrafting) te, pos);
             }
 
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResultType.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
+    @Deprecated
     public boolean hasAnalogOutputSignal(BlockState state)
     {
         return true;
     }
 
     @Override
-    public int getAnalogOutputSignal(BlockState state, World world, BlockPos pos)
+    @Deprecated
+    public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos)
     {
-        TileEntity te = world.getBlockEntity(pos);
+        BlockEntity te = world.getBlockEntity(pos);
 
         if (te != null && this.isTileEntityValid(te))
         {

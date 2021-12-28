@@ -2,28 +2,30 @@ package fi.dy.masa.lowtechcrafting.inventory;
 
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fmllegacy.hooks.BasicEventHooks;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
 import fi.dy.masa.lowtechcrafting.util.EntityUtils;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 
 public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 {
-    private final Supplier<World> worldSupplier;
-    private final Supplier<PlayerEntity> playerSupplier;
+    private final Supplier<Level> worldSupplier;
+    private final Supplier<Player> playerSupplier;
     private final Supplier<BlockPos> posSupplier;
-    @Nullable private World world;
-    @Nullable private PlayerEntity player;
+    @Nullable private Level world;
+    @Nullable private Player player;
     @Nullable private BlockPos pos;
     @Nullable private InventoryCraftingWrapper craftMatrix;
-    @Nullable private ICraftingRecipe recipe;
+    @Nullable private CraftingRecipe recipe;
 
-    public ItemHandlerCraftResult(Supplier<World> worldSupplier, Supplier<PlayerEntity> playerSupplier, Supplier<BlockPos> posSupplier)
+    public ItemHandlerCraftResult(Supplier<Level> worldSupplier, Supplier<Player> playerSupplier, Supplier<BlockPos> posSupplier)
     {
         super(1);
 
@@ -37,19 +39,19 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
         this.craftMatrix = craftMatrix;
     }
 
-    public void setRecipe(@Nullable ICraftingRecipe recipe)
+    public void setRecipe(@Nullable CraftingRecipe recipe)
     {
         this.recipe = recipe;
     }
 
     @Nullable
-    public ICraftingRecipe getRecipe()
+    public CraftingRecipe getRecipe()
     {
         return this.recipe;
     }
 
     @Nullable
-    private World getWorld()
+    private Level getWorld()
     {
         if (this.world == null)
         {
@@ -60,7 +62,7 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
     }
 
     @Nullable
-    private PlayerEntity getPlayer()
+    private Player getPlayer()
     {
         if (this.player == null)
         {
@@ -111,8 +113,8 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
 
     private void onCraft(ItemStack stack)
     {
-        PlayerEntity player = this.getPlayer();
-        World world = this.getWorld();
+        Player player = this.getPlayer();
+        Level world = this.getWorld();
         BlockPos pos = this.getPos();
 
         if (player == null || world == null || pos == null)
@@ -121,13 +123,13 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
         }
 
         stack.onCraftedBy(world, player, stack.getCount());
-        net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
-        net.minecraftforge.common.ForgeHooks.setCraftingPlayer(player);
+        BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
+        ForgeHooks.setCraftingPlayer(player);
 
         //NonNullList<ItemStack> remainingItems = world.getRecipeManager().getRecipeNonNull(IRecipeType.CRAFTING, this.craftMatrix, this.world);
         NonNullList<ItemStack> remainingItems = this.getRemainingItems();
 
-        net.minecraftforge.common.ForgeHooks.setCraftingPlayer(null);
+        ForgeHooks.setCraftingPlayer(null);
 
         // Prevent unnecessary updates via the markDirty() method, while updating the grid contents
         this.craftMatrix.setInhibitResultUpdate(true);

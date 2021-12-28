@@ -3,36 +3,36 @@ package fi.dy.masa.lowtechcrafting.inventory.wrapper;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.RecipeItemHelper;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.NonNullList;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.level.Level;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerTileEntity;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 import net.minecraftforge.common.util.INBTSerializable;
 
-public class InventoryCraftingWrapper extends CraftingInventory implements INBTSerializable<CompoundNBT>
+public class InventoryCraftingWrapper extends CraftingContainer implements INBTSerializable<CompoundTag>
 {
     private final int inventoryWidth;
     private final int inventoryHeight;
     private final ItemHandlerCraftResult craftResult;
     private final NonNullList<ItemStack> gridCache;
     private final ItemStackHandlerTileEntity craftMatrix;
-    private final Supplier<World> worldSupplier;
-    private Optional<ICraftingRecipe> lastCraftedRecipe = Optional.empty();
-    @Nullable private ICraftingRecipe recipe;
-    @Nullable private World world;
+    private final Supplier<Level> worldSupplier;
+    private Optional<CraftingRecipe> lastCraftedRecipe = Optional.empty();
+    @Nullable private CraftingRecipe recipe;
+    @Nullable private Level world;
     private boolean inhibitResultUpdate;
     private boolean gridDirty;
 
     public InventoryCraftingWrapper(int width, int height, ItemStackHandlerTileEntity craftMatrix,
-            ItemHandlerCraftResult resultInventory, Supplier<World> worldSupplier)
+            ItemHandlerCraftResult resultInventory, Supplier<Level> worldSupplier)
     {
         super(null, 0, 0); // dummy
 
@@ -47,7 +47,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Nullable
-    private World getWorld()
+    private Level getWorld()
     {
         if (this.world == null)
         {
@@ -180,7 +180,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public boolean stillValid(PlayerEntity player)
+    public boolean stillValid(Player player)
     {
         return true;
     }
@@ -198,22 +198,22 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
 
     public void updateCraftingOutput()
     {
-        World world = this.getWorld();
+        Level world = this.getWorld();
 
         if (this.gridDirty && this.inhibitResultUpdate == false && world != null && world.isClientSide == false)
         {
-            Optional<ICraftingRecipe> optional = this.lastCraftedRecipe;
+            Optional<CraftingRecipe> optional = this.lastCraftedRecipe;
 
             if (optional.isPresent() == false || optional.get().matches(this, world) == false)
             {
-                optional = world.getServer().getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, this, world);
+                optional = world.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, this, world);
             }
 
             ItemStack stack = ItemStack.EMPTY;
 
             if (optional.isPresent())
             {
-                ICraftingRecipe recipe = optional.get();
+                CraftingRecipe recipe = optional.get();
                 this.craftResult.setRecipe(recipe);
                 this.recipe = recipe;
                 stack = recipe.assemble(this);
@@ -234,7 +234,7 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public void fillStackedContents(RecipeItemHelper recipeItemHelper)
+    public void fillStackedContents(StackedContents recipeItemHelper)
     {
         final int invSize = this.craftMatrix.getSlots();
 
@@ -244,11 +244,11 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
         }
     }
 
-    public void startOpen(PlayerEntity player)
+    public void startOpen(Player player)
     {
     }
 
-    public void stopOpen(PlayerEntity player)
+    public void stopOpen(Player player)
     {
     }
 
@@ -267,13 +267,13 @@ public class InventoryCraftingWrapper extends CraftingInventory implements INBTS
     }
 
     @Override
-    public CompoundNBT serializeNBT()
+    public CompoundTag serializeNBT()
     {
         return this.craftMatrix.serializeNBT();
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt)
+    public void deserializeNBT(CompoundTag nbt)
     {
         this.craftMatrix.deserializeNBT(nbt);
         this.updateGridCache();

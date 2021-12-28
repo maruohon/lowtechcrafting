@@ -1,19 +1,20 @@
 package fi.dy.masa.lowtechcrafting.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;
 
-public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>// implements IRecipeShownListener
+public class AutoCraftingTableScreen extends AbstractContainerScreen<ContainerCrafting>// implements IRecipeShownListener
 {
     protected final ContainerCrafting containerCrafting;
     protected ResourceLocation guiTexture;
 
-    public AutoCraftingTableScreen(ContainerCrafting container, PlayerInventory playerInv, ITextComponent title)
+    public AutoCraftingTableScreen(ContainerCrafting container, Inventory playerInv, Component title)
     {
         super(container, playerInv, title);
 
@@ -24,23 +25,24 @@ public class AutoCraftingTableScreen extends ContainerScreen<ContainerCrafting>/
     }
 
     @Override
-    protected void renderBg(MatrixStack matrixStack, float gameTicks, int mouseX, int mouseY)
+    protected void renderBg(PoseStack matrixStack, float gameTicks, int mouseX, int mouseY)
     {
-        RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        this.minecraft.getTextureManager().bind(this.guiTexture);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, this.guiTexture);
         this.blit(matrixStack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
     }
 
     @Override
-    protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY)
+    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY)
     {
         String s = this.title.getString();
         this.font.draw(matrixStack, s, this.imageWidth / 2.0F - this.font.width(s) / 2.0F, 5, 0x404040);
-        this.font.draw(matrixStack, this.inventory.getDisplayName().getString(), 8, 73, 0x404040);
+        this.font.draw(matrixStack, this.playerInventoryTitle.getString(), 8, 73, 0x404040);
     }
 
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
