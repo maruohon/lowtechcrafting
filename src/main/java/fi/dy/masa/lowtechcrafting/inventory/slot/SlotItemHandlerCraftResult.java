@@ -5,7 +5,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.fmllegacy.hooks.BasicEventHooks;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.items.IItemHandler;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 
@@ -59,7 +59,7 @@ public class SlotItemHandlerCraftResult extends SlotItemHandlerGeneric
         if (this.amountCrafted > 0)
         {
             stack.onCraftedBy(this.player.getCommandSenderWorld(), this.player, this.amountCrafted);
-            BasicEventHooks.firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
+            ForgeEventFactory.firePlayerCraftingEvent(this.player, stack, this.craftMatrix);
         }
 
         this.amountCrafted = 0;

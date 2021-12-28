@@ -162,7 +162,7 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
     {
         if (this.getLevel() != null)
         {
-            return new ClientboundBlockEntityDataPacket(this.getBlockPos(), 0, this.getUpdateTag());
+            return ClientboundBlockEntityDataPacket.create(this);
         }
 
         return null;

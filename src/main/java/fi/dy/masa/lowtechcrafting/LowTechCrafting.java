@@ -14,7 +14,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fmllegacy.network.IContainerFactory;
+import net.minecraftforge.network.IContainerFactory;
 import fi.dy.masa.lowtechcrafting.blocks.BlockCraftingTable;
 import fi.dy.masa.lowtechcrafting.client.ClientInit;
 import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;

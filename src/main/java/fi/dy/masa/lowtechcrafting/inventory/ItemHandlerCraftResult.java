@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.fmllegacy.hooks.BasicEventHooks;
+import net.minecraftforge.event.ForgeEventFactory;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
 import fi.dy.masa.lowtechcrafting.util.EntityUtils;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
@@ -123,7 +123,7 @@ public class ItemHandlerCraftResult extends ItemStackHandlerBasic
         }
 
         stack.onCraftedBy(world, player, stack.getCount());
-        BasicEventHooks.firePlayerCraftingEvent(player, stack, this.craftMatrix);
+        ForgeEventFactory.firePlayerCraftingEvent(player, stack, this.craftMatrix);
         ForgeHooks.setCraftingPlayer(player);
 
         //NonNullList<ItemStack> remainingItems = world.getRecipeManager().getRecipeNonNull(IRecipeType.CRAFTING, this.craftMatrix, this.world);
