@@ -127,10 +127,8 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
     }
 
     @Override
-    public CompoundTag save(CompoundTag nbt)
+    protected void saveAdditional(CompoundTag nbt)
     {
-        nbt = super.save(nbt);
-
         nbt.merge(this.itemHandlerOutputBuffer.serializeNBT());
         nbt.merge(this.inventoryCrafting.serializeNBT());
 
@@ -138,8 +136,6 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
         {
             nbt.putString("CustomName", this.customInventoryName);
         }
-
-        return nbt;
     }
 
     @Override
