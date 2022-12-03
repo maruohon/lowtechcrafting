@@ -2,6 +2,7 @@ package fi.dy.masa.lowtechcrafting.blocks;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,10 +24,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.network.NetworkHooks;
+
 import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 
 @MethodsReturnNonnullByDefault
@@ -113,7 +115,7 @@ public class BlockCraftingTable extends BaseEntityBlock
         {
             if (world.isClientSide == false && player instanceof ServerPlayer)
             {
-                NetworkHooks.openGui((ServerPlayer) player, (BlockEntityCrafting) te, pos);
+                NetworkHooks.openScreen((ServerPlayer) player, (BlockEntityCrafting) te, pos);
             }
 
             return InteractionResult.SUCCESS;
@@ -137,7 +139,7 @@ public class BlockCraftingTable extends BaseEntityBlock
 
         if (te != null && this.isTileEntityValid(te))
         {
-            LazyOptional<IItemHandler> optional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.NORTH);
+            LazyOptional<IItemHandler> optional = te.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.NORTH);
 
             if (optional.isPresent())
             {

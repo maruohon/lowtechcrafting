@@ -4,12 +4,12 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import com.mojang.authlib.GameProfile;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
@@ -20,17 +20,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+
+import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.ItemStackHandlerTileEntity;
 import fi.dy.masa.lowtechcrafting.inventory.container.ContainerCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.ItemHandlerWrapperCrafter;
-import fi.dy.masa.lowtechcrafting.reference.ModObjects;
 import fi.dy.masa.lowtechcrafting.reference.Names;
 import fi.dy.masa.lowtechcrafting.reference.Reference;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
@@ -50,7 +51,7 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
 
     public BlockEntityCrafting(BlockPos pos, BlockState state)
     {
-        super(ModObjects.TILE_TYPE_CRAFTING_TABLE, pos, state);
+        super(LowTechCrafting.BLOCK_ENTITY_TYPE_CRAFTING_TABLE.get(), pos, state);
 
         this.tileEntityName = Names.CRAFTING_TABLE;
         this.itemHandlerCraftingGrid    = new ItemStackHandlerTileEntity(0, 9, 64, false, "Items", this);
@@ -167,7 +168,7 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction side)
     {
-        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+        if (capability == ForgeCapabilities.ITEM_HANDLER)
         {
             return this.inventoryCapability.cast();
         }
@@ -197,7 +198,7 @@ public class BlockEntityCrafting extends BlockEntity implements MenuProvider
     @Override
     public Component getDisplayName()
     {
-        return new TranslatableComponent(this.getName());
+        return Component.translatable(this.getName());
     }
 
     @Override

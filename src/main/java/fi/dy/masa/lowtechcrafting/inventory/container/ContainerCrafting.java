@@ -7,13 +7,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
+
+import fi.dy.masa.lowtechcrafting.LowTechCrafting;
 import fi.dy.masa.lowtechcrafting.inventory.ItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.ContainerCustomSlotClick;
 import fi.dy.masa.lowtechcrafting.inventory.container.base.MergeSlotRange;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerCraftResult;
 import fi.dy.masa.lowtechcrafting.inventory.slot.SlotItemHandlerGeneric;
 import fi.dy.masa.lowtechcrafting.inventory.wrapper.InventoryCraftingWrapper;
-import fi.dy.masa.lowtechcrafting.reference.ModObjects;
 import fi.dy.masa.lowtechcrafting.tileentity.BlockEntityCrafting;
 import fi.dy.masa.lowtechcrafting.util.InventoryUtils;
 
@@ -32,7 +33,7 @@ public class ContainerCrafting extends ContainerCustomSlotClick //<InventoryCraf
 
     public ContainerCrafting(int windowId, Player player, BlockEntityCrafting te)
     {
-        super(windowId, ModObjects.CONTAINER_TYPE_CRAFTING_TABLE, player, te.getCraftingWrapperInventory());
+        super(windowId, LowTechCrafting.MENU_TYPE_CRAFTING_TABLE.get(), player, te.getCraftingWrapperInventory());
 
         this.te = te;
         this.invCraftingGrid = te.getCraftingGridWrapperInventory();
